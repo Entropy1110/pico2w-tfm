@@ -4,3 +4,6 @@
 [submodule "trusted-firmware-m"]
 	path = trusted-firmware-m
 	url = https://github.com/TrustedFirmware-M/trusted-firmware-m.git
+[submodule "pico-sdk"]
+	path = pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
