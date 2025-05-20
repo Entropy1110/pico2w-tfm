@@ -1,3 +1,6 @@
 [submodule "pico2w-tfm-exmaple"]
 	path = pico2w-tfm-exmaple
 	url = https://github.com/Entropy1110/pico2w-tfm-exmaple
+[submodule "trusted-firmware-m"]
+	path = trusted-firmware-m
+	url = https://github.com/TrustedFirmware-M/trusted-firmware-m.git
