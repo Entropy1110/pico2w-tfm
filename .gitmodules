@@ -6,4 +6,4 @@
 	url = https://github.com/raspberrypi/pico-sdk.git
 [submodule "pico2w-trusted-firmware-m"]
 	path = pico2w-trusted-firmware-m
-	url = https://github.com/Entropy1110/pico2w-trusted-firmware-m
+	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git
