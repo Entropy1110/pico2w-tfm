@@ -7,3 +7,6 @@
 [submodule "pico2w-trusted-firmware-m"]
 	path = pico2w-trusted-firmware-m
 	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git
+[submodule "pico2w-tfm-tflm-ns"]
+	path = pico2w-tfm-tflm-ns
+	url = https://github.com/TZTZEN/pico2w-tfm-tflm-ns.git
