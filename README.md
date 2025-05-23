@@ -3,6 +3,6 @@ This project is an example of building and running Secure and Non-Secure applica
 
 ```bash
 git clone --recursive https://github.com/TZTZEN/pico2w-tfm-tflm.git
-cd pico2w-tfm
+cd pico2w-tfm-tflm
 ```
 For detailed build procedures and step-by-step commands, please refer to the README file or related build documentation in the pico2w-tfm-exmaple repository (as of commit d8e4261).
