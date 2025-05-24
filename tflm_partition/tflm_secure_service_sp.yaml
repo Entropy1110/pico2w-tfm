@@ -1,0 +1,25 @@
+{
+  "psa_framework_version": 1.1,
+  "name": "TFLM_SECURE_SERVICE_SP",
+  "type": "PSA-ROT",
+  "priority": "HIGH",
+  "model": "IPC",
+  "entry_point": "tflm_secure_service_sp_main",
+  "stack_size": "0x2000",
+  "heap_size": "0x1000",
+  "services": [
+    {
+      "name": "TFLM_SECURE_SERVICE",
+      "sid": "0x00000100",
+      "non_secure_clients": true,
+      "connection_based": true,
+      "version": 1,
+      "version_policy": "STRICT"
+    }
+  ],
+  "mmio_regions": [],
+  "dependencies": [
+    "TFM_CRYPTO",
+    "TFM_INTERNAL_TRUSTED_STORAGE"
+  ]
+}

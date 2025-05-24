@@ -1,0 +1,12 @@
+{
+  "description": "TFLM Secure Service manifest list",
+  "type": "manifest_list", 
+  "version_major": 0,
+  "version_minor": 1,
+  "manifest_list": [
+    {
+      "description": "TFLM Secure Service Partition",
+      "manifest": "tflm_secure_service_sp.yaml"
+    }
+  ]
+}
