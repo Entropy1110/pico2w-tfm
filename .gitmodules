@@ -1,6 +1,3 @@
-[submodule "pico2w-tfm-exmaple"]
-	path = pico2w-tfm-exmaple
-	url = https://github.com/Entropy1110/pico2w-tfm-exmaple
 [submodule "pico-sdk"]
 	path = pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
