@@ -14,10 +14,14 @@ static psa_key_handle_t model_key_handle = 0;
 
 /* Dummy key for testing - in production, this should be securely provisioned */
 static const uint8_t model_key_data[] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
+    0xC6, 0x9C, 0xE1, 0xD0,
+    0x9F, 0xE9, 0xCD, 0x85,
+    0xD9, 0x52, 0x80, 0x14,
+    0xCC, 0x7D, 0x38, 0x26,
+    0xB4, 0x0F, 0x01, 0xBF,
+    0xE9, 0x99, 0x1F, 0x4D,
+    0xC8, 0xDF, 0x2B, 0xBB,
+    0x8C, 0xFB, 0xBC, 0x47
 };
 
 psa_status_t tflm_crypto_init(void)
@@ -54,29 +58,95 @@ psa_status_t tflm_crypto_init(void)
 }
 
 psa_status_t tflm_decrypt_model(const uint8_t *encrypted_data,
-                                 size_t encrypted_size,
-                                 uint8_t **decrypted_data,
-                                 size_t *decrypted_size)
+                                size_t encrypted_size,
+                                uint8_t **decrypted_data,
+                                size_t *decrypted_size)
 {
     psa_status_t status;
-    size_t output_length;
+    psa_cipher_operation_t op = PSA_CIPHER_OPERATION_INIT;
+    size_t iv_size = psa_cipher_iv_length(PSA_ALG_CBC_NO_PADDING);
+    size_t cipher_size;
+    uint8_t *output = NULL;
+    size_t output_len = 0, finish_len = 0;
 
-    INFO_UNPRIV_RAW("[TFLM Crypto] Decrypting model, size: %d", encrypted_size);
+    if (encrypted_size <= iv_size) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Encrypted data too small");
+        return PSA_ERROR_INVALID_ARGUMENT;
+    }
 
-    /* For now, just copy the data (dummy implementation) */
-    /* In production, implement actual AES decryption */
-    *decrypted_data = (uint8_t *)malloc(encrypted_size);
-    if (*decrypted_data == NULL) {
-        INFO_UNPRIV_RAW("[TFLM Crypto] Failed to allocate memory for decrypted data");
+    /* 1) IV / Cipher 분리 */
+    const uint8_t *iv     = encrypted_data;
+    const uint8_t *cipher = encrypted_data + iv_size;
+    cipher_size = encrypted_size - iv_size;
+
+    /* 2) 출력 버퍼 할당 (같은 크기) */
+    output = (uint8_t *)malloc(cipher_size);
+    if (!output) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Memory alloc failed");
         return PSA_ERROR_INSUFFICIENT_MEMORY;
     }
 
-    /* Dummy decryption - just copy the data */
-    memcpy(*decrypted_data, encrypted_data, encrypted_size);
-    *decrypted_size = encrypted_size;
+    /* 3) 복호화 연산 설정 */
+    status = psa_cipher_decrypt_setup(&op, model_key_handle, PSA_ALG_CBC_NO_PADDING);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Decrypt setup failed: %d", status);
+        goto cleanup;
+    }
 
-    INFO_UNPRIV_RAW("[TFLM Crypto] Model decrypted successfully");
-    return PSA_SUCCESS;
+    /* 4) IV 설정 */
+    status = psa_cipher_set_iv(&op, iv, iv_size);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Set IV failed: %d", status);
+        goto cleanup;
+    }
+
+    /* 5) ciphertext → plaintext */
+    status = psa_cipher_update(&op, cipher, cipher_size,
+                               output, cipher_size, &output_len);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Decrypt update failed: %d", status);
+        goto cleanup;
+    }
+
+    /* 6) 마무리 (block alignment 확인) */
+    status = psa_cipher_finish(&op, output + output_len,
+                               cipher_size - output_len, &finish_len);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Decrypt finish failed: %d", status);
+        goto cleanup;
+    }
+    output_len += finish_len;
+
+    /* 7) PKCS#7 패딩 제거 */
+    if (output_len == 0 || output_len % iv_size != 0) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Invalid plaintext length");
+        status = PSA_ERROR_INVALID_SIGNATURE;
+        goto cleanup;
+    }
+    uint8_t pad = output[output_len - 1];
+    if (pad == 0 || pad > iv_size) {
+        INFO_UNPRIV_RAW("[TFLM Crypto] Bad padding value");
+        status = PSA_ERROR_INVALID_SIGNATURE;
+        goto cleanup;
+    }
+    /* 패딩 바이트 검사 */
+    for (size_t i = 0; i < pad; i++) {
+        if (output[output_len - 1 - i] != pad) {
+            INFO_UNPRIV_RAW("[TFLM Crypto] Padding check failed");
+            status = PSA_ERROR_INVALID_SIGNATURE;
+            goto cleanup;
+        }
+    }
+    *decrypted_size = output_len - pad;
+    *decrypted_data = output;
+    status = PSA_SUCCESS;
+
+cleanup:
+    psa_cipher_abort(&op);
+    if (status != PSA_SUCCESS) {
+        free(output);
+    }
+    return status;
 }
 
 psa_status_t tflm_encrypt_output(const uint8_t *plain_data,
