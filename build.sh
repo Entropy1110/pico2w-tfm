@@ -4,10 +4,11 @@ set -e
 export PROJECT_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export TFM_SOURCE_DIR="${PROJECT_ROOT_DIR}/pico2w-trusted-firmware-m"
 export PICO_SDK_DIR="${PROJECT_ROOT_DIR}/pico-sdk"
-export TFLM_PARTITION_DIR="${PROJECT_ROOT_DIR}/tflm_partition"
-export NS_APP_DIR="${PROJECT_ROOT_DIR}/pico2w-tfm-tflm-ns"
-export SPE_BUILD_DIR="${NS_APP_DIR}/build/spe"
-export NSPE_BUILD_DIR="${NS_APP_DIR}/build/nspe"
+export TFLM_SPE_DIR="${PROJECT_ROOT_DIR}/tflm_spe"
+export TFLM_NS_DIR="${PROJECT_ROOT_DIR}/tflm_ns"
+export APP_BROKER_DIR="${PROJECT_ROOT_DIR}/app_broker"
+export SPE_BUILD_DIR="${PROJECT_ROOT_DIR}/build/spe"
+export NSPE_BUILD_DIR="${PROJECT_ROOT_DIR}/build/nspe"
 
 NPROC=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || echo 1)
 echo "Using ${NPROC} cores for building."
@@ -23,15 +24,13 @@ cd "${SPE_BUILD_DIR}"
 rm -rf ./*
 
 # Configure SPE build
-cmake -S "${TFM_SOURCE_DIR}" \
+cmake -S "${TFLM_SPE_DIR}" \
       -B . \
       -DTFM_PLATFORM=rpi/rp2350 \
       -DPICO_BOARD=pico2_w \
       -DTFM_PROFILE=profile_medium \
       -DPICO_SDK_PATH="${PICO_SDK_DIR}" \
-      -DTFM_EXTRA_PARTITION_PATHS="${TFLM_PARTITION_DIR}" \
-      -DNS_APPLICATION_DIR="${NS_APP_DIR}/app/client_ns_app" \
-      -DNS_APPLICATION_SOURCES="${NS_APP_DIR}/app/client_ns_app/main_ns.c" \
+      -DCONFIG_TFM_SOURCE_PATH="${TFM_SOURCE_DIR}" \
       -DPLATFORM_DEFAULT_PROVISIONING=OFF
 
 # Build and install SPE
@@ -51,7 +50,7 @@ cd "${NSPE_BUILD_DIR}"
 rm -rf ./*
 
 # Configure NSPE build
-cmake -S "${NS_APP_DIR}/app/client_ns_app" \
+cmake -S "${TFLM_NS_DIR}" \
       -B . \
       -DTFM_PLATFORM=rpi/rp2350 \
       -DCONFIG_SPE_PATH="${SPE_BUILD_DIR}/api_ns" \
@@ -72,7 +71,7 @@ echo "######################################"
 if [ -f "./pico_uf2.sh" ]; then
     chmod +x ./pico_uf2.sh
     chmod +x ./uf2conv.py
-    ./pico_uf2.sh pico2w-tfm-tflm-ns build
+    ./pico_uf2.sh . build
     echo "UF2 conversion completed."
     echo "Generated UF2 files can be found in ${SPE_BUILD_DIR}/bin/"
     echo "  - bl2.uf2"

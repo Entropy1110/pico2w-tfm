@@ -1,0 +1,24 @@
+{
+  "psa_framework_version": 1.1,
+  "name": "TFLM_SECURE_SERVICE_SP",
+  "type": "PSA-ROT",
+  "priority": "NORMAL",
+  "model": "SFN",
+  "entry_init": "tflm_secure_service_sp_init",
+  "stack_size": "0x2000",
+  "services": [
+    {
+      "name": "TFLM_SECURE_SERVICE",
+      "sid": "0x00000100",
+      "non_secure_clients": true,
+      "connection_based": false,
+      "stateless_handle": 1,
+      "version": 1,
+      "version_policy": "STRICT"
+    }
+  ],
+  "dependencies": [
+    "TFM_CRYPTO",
+    "TFM_INTERNAL_TRUSTED_STORAGE_SERVICE"
+  ]
+}
