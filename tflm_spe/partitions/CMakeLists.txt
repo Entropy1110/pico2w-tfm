@@ -5,13 +5,41 @@
 
 cmake_minimum_required(VERSION 3.21)
 
+# Import the TFLM minimal static library
+set(TFLM_MINIMAL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../tflm_minimal)
+
+# Check if TFLM library exists, build if needed
+set(TFLM_LIBRARY_PATH ${TFLM_MINIMAL_ROOT}/build_arm/libtflm_minimal.a)
+set(TFLM_AVAILABLE FALSE)
+
+if(EXISTS ${TFLM_LIBRARY_PATH})
+    set(TFLM_AVAILABLE TRUE)
+    message(STATUS "TFLM library found at ${TFLM_LIBRARY_PATH}")
+else()
+    message(WARNING "TFLM library not found. Building without TFLM support for echo test.")
+    message(STATUS "To enable full TFLM functionality, build the library manually:")
+    message(STATUS "  cd ${TFLM_MINIMAL_ROOT}")
+    message(STATUS "  cmake -S . -B build_arm -DARM_TOOLCHAIN=ON")
+    message(STATUS "  cmake --build build_arm")
+endif()
+
+# Import the pre-built TFLM library if available
+if(TFLM_AVAILABLE)
+    add_library(tflm_minimal STATIC IMPORTED)
+    set_target_properties(tflm_minimal PROPERTIES
+        IMPORTED_LOCATION ${TFLM_LIBRARY_PATH}
+        INTERFACE_INCLUDE_DIRECTORIES "${TFLM_MINIMAL_ROOT}/include;${TFLM_MINIMAL_ROOT}"
+    )
+endif()
+
 add_library(tflm_secure_service_sp STATIC)
 
 target_sources(tflm_secure_service_sp
     PRIVATE
         tflm_secure_service_sp.c
         tflm_crypto_ops.c
-        tflm_inference_engine.c
+        tflm_inference_engine.cpp
+        encrypted_audio_model.c
 )
 
 target_include_directories(tflm_secure_service_sp
@@ -26,13 +54,36 @@ target_include_directories(tflm_secure_service_sp
         ${CMAKE_BINARY_DIR}/lib/ext/mbedcrypto-src/include
         ${CMAKE_BINARY_DIR}/lib/ext/mbedcrypto-build/include
         ${CMAKE_BINARY_DIR}/lib/ext/mbedcrypto-build
+        # TFLM minimal library includes
+        ${TFLM_MINIMAL_ROOT}/include
+        ${TFLM_MINIMAL_ROOT}
 )
 
-target_link_libraries(tflm_secure_service_sp
-    PRIVATE
-        tfm_sprt
-        platform_s
-)
+# Conditionally link TFLM library if available
+if(TFLM_AVAILABLE)
+    target_link_libraries(tflm_secure_service_sp
+        PRIVATE
+            tfm_sprt
+            platform_s
+            tflm_minimal  # Link our TFLM static library
+    )
+    target_compile_definitions(tflm_secure_service_sp
+        PRIVATE
+            TFLM_LIBRARY_AVAILABLE=1
+    )
+    message(STATUS "Linking with TFLM library support")
+else()
+    target_link_libraries(tflm_secure_service_sp
+        PRIVATE
+            tfm_sprt
+            platform_s
+    )
+    target_compile_definitions(tflm_secure_service_sp
+        PRIVATE
+            TFLM_LIBRARY_AVAILABLE=0
+    )
+    message(STATUS "Building without TFLM library - echo test only")
+endif()
 
 target_compile_definitions(tflm_secure_service_sp
     PRIVATE

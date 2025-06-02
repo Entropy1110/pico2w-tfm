@@ -41,5 +41,5 @@ set(CRYPTO_HASH_MODULE_ENABLED               ON       CACHE BOOL      "Enable ha
 
 # Set the project configuration header file
 set(PROJECT_CONFIG_HEADER_FILE
-    ${CMAKE_CURRENT_LIST_DIR}/config_provision.h
-    CACHE FILEPATH "The provision config header file")
+    ${CMAKE_CURRENT_LIST_DIR}/config_tflm.h
+    CACHE FILEPATH "The tflm config header file")

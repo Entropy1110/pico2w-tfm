@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __TFM_PROVISION_APP_H__
-#define __TFM_PROVISION_APP_H__
+#ifndef __TFM_TFLM_APP_H__
+#define __TFM_TFLM_APP_H__
 
 #include <stdint.h>
 
@@ -21,14 +21,7 @@ extern "C" {
 #define UNUSED_VARIABLE(X) ((void)(X))
 
 /**
- * \brief Main provision application for the RTX-TFM core
- *        integration
- *
- */
-void provision_app(void *argument);
-
-/**
- * \brief Main provision thread entry point
+ * \brief Main TFLM thread entry point
  *
  */
 void tflm_main(void *argument);
@@ -37,4 +30,4 @@ void tflm_main(void *argument);
 }
 #endif
 
-#endif /* __TFM_PROVISION_APP_H__ */
+#endif /* __TFM_TFLM_APP_H__ */

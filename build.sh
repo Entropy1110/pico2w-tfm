@@ -30,7 +30,10 @@ cmake -S "${TFLM_SPE_DIR}" \
       -DPICO_BOARD=pico2_w \
       -DTFM_PROFILE=profile_medium \
       -DPICO_SDK_PATH="${PICO_SDK_DIR}" \
+      -DTFM_TOOLCHAIN_FILE="${TFM_SOURCE_DIR}/toolchain_GNUARM.cmake" \
       -DCONFIG_TFM_SOURCE_PATH="${TFM_SOURCE_DIR}" \
+      -DTFM_EXTRA_PARTITION_PATHS="${TFLM_SPE_DIR}/partitions" \
+      -DTFM_EXTRA_MANIFEST_LIST_FILES="${TFLM_SPE_DIR}/tflm_manifest_list.txt" \
       -DPLATFORM_DEFAULT_PROVISIONING=OFF
 
 # Build and install SPE

@@ -9,31 +9,31 @@ cmake_minimum_required(VERSION 3.21)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/utils)
 include(utils)
-include(provision_flag_parse)
+include(tflm_flag_parse)
 
 collect_build_cmd_args(TFM_CMDLINE_CONFIGS)
 
-project("TF-M SPE for Provision" NONE)
+project("TF-M SPE for tflm" NONE)
 
 if (NOT DEFINED CONFIG_TFM_SOURCE_PATH OR NOT EXISTS ${CONFIG_TFM_SOURCE_PATH})
     message(FATAL_ERROR "CONFIG_TFM_SOURCE_PATH = ${CONFIG_TFM_SOURCE_PATH} is not defined or incorrect. Please provide full path to TF-M sources.")
 endif()
 
-# Parse provision flags (ensures all test flags are disabled)
-parse_provision_flag(TFM_CMDLINE_CONFIGS)
+# Parse tflm flags (ensures all test flags are disabled)
+parse_tflm_flag(TFM_CMDLINE_CONFIGS)
 
-# Provision application does not need regression tests - force all test flags to OFF
-set(TFM_NS_REG_TEST OFF CACHE BOOL "Non-secure regression tests are disabled for provision" FORCE)
-set(TFM_S_REG_TEST OFF CACHE BOOL "Secure regression tests are disabled for provision" FORCE)
-set(TEST_BL2 OFF CACHE BOOL "BL2 tests are disabled for provision" FORCE)
-set(TEST_BL1_1 OFF CACHE BOOL "BL1_1 tests are disabled for provision" FORCE)
-set(TEST_BL1_2 OFF CACHE BOOL "BL1_2 tests are disabled for provision" FORCE)
+# tflm application does not need regression tests - force all test flags to OFF
+set(TFM_NS_REG_TEST OFF CACHE BOOL "Non-secure regression tests are disabled for tflm" FORCE)
+set(TFM_S_REG_TEST OFF CACHE BOOL "Secure regression tests are disabled for tflm" FORCE)
+set(TEST_BL2 OFF CACHE BOOL "BL2 tests are disabled for tflm" FORCE)
+set(TEST_BL1_1 OFF CACHE BOOL "BL1_1 tests are disabled for tflm" FORCE)
+set(TEST_BL1_2 OFF CACHE BOOL "BL1_2 tests are disabled for tflm" FORCE)
 
 # tfm_s_tflm is IMPORTED to inform CMake that it has no source files.
 add_executable(tfm_s_tflm IMPORTED)
 
-# Use provision-specific configuration file
-set(CONFIG_PROVISION_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/config/config_provision.cmake)
+# Use tflm-specific configuration file
+set(CONFIG_TFLM_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/config/config_tflm.cmake)
 
 # Add TFLM partition to the build
 set(TFM_EXTRA_PARTITION_PATHS ${CMAKE_CURRENT_LIST_DIR}/partitions)
@@ -46,7 +46,7 @@ ExternalProject_Add(TF-M
   BINARY_DIR        build-spe
   INSTALL_DIR       api_ns
   CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-  CMAKE_ARGS        -DPROJECT_CONFIG_HEADER_FILE=${CMAKE_CURRENT_LIST_DIR}/config/config_provision.h
+  CMAKE_ARGS        -DPROJECT_CONFIG_HEADER_FILE=${CMAKE_CURRENT_LIST_DIR}/config/config_tflm.h
   CMAKE_ARGS        -DTFM_EXTRA_PARTITION_PATHS=${TFM_EXTRA_PARTITION_PATHS}
   CMAKE_ARGS        -DTFM_EXTRA_MANIFEST_LIST_FILES=${TFM_EXTRA_MANIFEST_LIST_FILES}
   CMAKE_CACHE_DEFAULT_ARGS ${TFM_CMDLINE_CONFIGS}

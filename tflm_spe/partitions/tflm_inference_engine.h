@@ -18,15 +18,24 @@ extern "C" {
 /* Initialize a model and get its information */
 psa_status_t tflm_init_model(const uint8_t *model_data,
                               size_t model_size,
-                              tflm_model_info_t *model_info);
+                              uint32_t *model_id);
+
+/* Get model information */
+psa_status_t tflm_get_model_info(uint32_t model_id,
+                                 uint32_t *input_size,
+                                 uint32_t *output_size,
+                                 uint32_t *model_version);
 
 /* Run inference on the model */
-psa_status_t tflm_run_inference(const uint8_t *model_data,
+psa_status_t tflm_run_inference(uint32_t model_id,
                                 const uint8_t *input_data,
                                 size_t input_size,
                                 uint8_t *output_data,
-                                size_t output_buffer_size,
+                                size_t output_size,
                                 size_t *actual_output_size);
+
+/* Cleanup model resources */
+void tflm_cleanup_model(void);
 
 // usage
 //status = tflm_decrypt_model(encrypted_model_data, model_size, 

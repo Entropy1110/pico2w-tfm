@@ -49,7 +49,7 @@ __asm("  .global __ARM_use_no_argv\n");
  * \brief List of RTOS thread attributes
  */
 static const osThreadAttr_t thread_attr = {
-    .name = "provision_thread",
+    .name = "tflm_thread",
     .stack_size = 4096U,
     .tz_module = ((TZ_ModuleId_t)TFM_DEFAULT_NSID)
 };

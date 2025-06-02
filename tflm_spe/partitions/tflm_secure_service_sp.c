@@ -5,11 +5,13 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include "psa/service.h"
 #include "tflm_secure_service_sp.h"
 #include "tfm_log_unpriv.h"
 #include "tflm_crypto_ops.h"
 #include "tflm_inference_engine.h"
+#include "encrypted_audio_model.h"
 
 /* Include the generated interface header */
 #include "psa_tflm_defs.h"
@@ -61,20 +63,11 @@ static loaded_model_t* find_model_by_id(uint32_t model_id)
 /* Handle load model request */
 static psa_status_t handle_load_model(const psa_msg_t *msg)
 {
-    uint8_t encrypted_model_data[1024]; /* Temporary buffer */
-    size_t model_size;
-    uint32_t model_id;
     loaded_model_t *slot;
     psa_status_t status;
+    uint32_t model_id;
 
     INFO_UNPRIV_RAW("[TFLM SP] Handling load model request");
-
-    /* Read encrypted model data */
-    model_size = psa_read(msg->handle, 0, encrypted_model_data, sizeof(encrypted_model_data));
-    if (model_size == 0) {
-        INFO_UNPRIV_RAW("[TFLM SP] Failed to read model data");
-        return PSA_ERROR_INVALID_ARGUMENT;
-    }
 
     /* Find free slot */
     slot = find_free_slot();
@@ -83,30 +76,44 @@ static psa_status_t handle_load_model(const psa_msg_t *msg)
         return PSA_ERROR_INSUFFICIENT_MEMORY;
     }
 
-    /* Decrypt the model (dummy implementation for now) */
-    status = tflm_decrypt_model(encrypted_model_data, model_size, 
+    /* Decrypt the embedded encrypted model */
+    status = tflm_decrypt_model(encrypted_audio_preprocessor_int8_data, 
+                                encrypted_audio_preprocessor_int8_size,
                                 &slot->model_data, &slot->model_size);
     if (status != PSA_SUCCESS) {
-        INFO_UNPRIV_RAW("[TFLM SP] Failed to decrypt model");
+        INFO_UNPRIV_RAW("[TFLM SP] Failed to decrypt model: %d", status);
         return status;
     }
 
+    /* Assign model ID first */
+    slot->model_id = next_model_id++;
+    model_id = slot->model_id;
+    
     /* Initialize model in inference engine */
-    status = tflm_init_model(slot->model_data, slot->model_size, &slot->info);
+    uint32_t returned_model_id;
+    status = tflm_init_model(slot->model_data, slot->model_size, &returned_model_id);
     if (status != PSA_SUCCESS) {
-        INFO_UNPRIV_RAW("[TFLM SP] Failed to initialize model");
+        INFO_UNPRIV_RAW("[TFLM SP] Failed to initialize model: %d", status);
         /* Clean up allocated memory */
         if (slot->model_data) {
-            /* Free memory - implementation depends on memory allocator */
+            free(slot->model_data);
             slot->model_data = NULL;
         }
         return status;
     }
 
-    /* Assign model ID and mark as loaded */
-    slot->model_id = next_model_id++;
+    /* Get model info using the new function */
+    uint32_t input_size, output_size, model_version;
+    status = tflm_get_model_info(returned_model_id, &input_size, &output_size, &model_version);
+    if (status == PSA_SUCCESS) {
+        slot->info.model_id = returned_model_id;
+        slot->info.input_size = input_size;
+        slot->info.output_size = output_size;
+        slot->info.model_version = model_version;
+    }
+
+    /* Mark as loaded */
     slot->is_loaded = true;
-    model_id = slot->model_id;
 
     /* Write model ID back to client */
     psa_write(msg->handle, 0, &model_id, sizeof(model_id));
@@ -148,7 +155,7 @@ static psa_status_t handle_run_inference(const psa_msg_t *msg)
     psa_read(msg->handle, 1, input_data, request.input_size);
 
     /* Run inference */
-    status = tflm_run_inference(model->model_data, input_data, request.input_size,
+    status = tflm_run_inference(model->model_id, input_data, request.input_size,
                                 output_data, sizeof(output_data), &actual_output_size);
     if (status != PSA_SUCCESS) {
         INFO_UNPRIV_RAW("[TFLM SP] Inference failed");
@@ -214,9 +221,13 @@ static psa_status_t handle_unload_model(const psa_msg_t *msg)
 
     /* Clean up model */
     if (model->model_data) {
-        /* Free memory - implementation depends on memory allocator */
+        free(model->model_data);
         model->model_data = NULL;
     }
+    
+    /* Clean up TFLM resources */
+    tflm_cleanup_model();
+    
     model->is_loaded = false;
     model->model_size = 0;
     model->model_id = 0;
