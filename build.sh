@@ -16,7 +16,7 @@ echo "========================================"
 # Clean previous build artifacts
 echo "Cleaning previous build directories..."
 # rm -rf "${BUILD_DIR}/spe"
-rm -rf "${BUILD_DIR}/nspe"
+# rm -rf "${BUILD_DIR}/nspe"
 echo "Cleaning complete."
 
 # Create build directories

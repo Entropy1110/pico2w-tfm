@@ -28,7 +28,7 @@ void test_echo_service(void)
     input_buffer[sizeof(input_buffer) - 1] = '\0';
     
     size_t input_len = strlen((char*)input_buffer);
-    printf("Input:  '%s' (length: %zu)\n", (char*)input_buffer, input_len);
+    printf("Input:  '%s' (length: %d)\n", (char*)input_buffer, (int)input_len);
 
     /* Clear output buffer */
     memset(output_buffer, 0, sizeof(output_buffer));
@@ -39,7 +39,7 @@ void test_echo_service(void)
                               &output_size);
 
     if (status == PSA_SUCCESS) {
-        printf("Output: '%s' (length: %zu)\n", (char*)output_buffer, output_size);
+        printf("Output: '%s' (length: %d)\n", (char*)output_buffer, (int)output_size);
         
         if (memcmp(input_buffer, output_buffer, input_len) == 0 && output_size == input_len) {
             printf("✓ Test 1 PASSED\n");
@@ -69,7 +69,7 @@ void test_echo_service(void)
     if (status == PSA_SUCCESS && output_size == TFM_ECHO_MAX_DATA_SIZE) {
         printf("✓ Test 3 PASSED - maximum size data echoed correctly\n");
     } else {
-        printf("✗ Test 3 FAILED - status: %d, output_size: %zu\n", (int)status, output_size);
+        printf("✗ Test 3 FAILED - status: %d, output_size: %d\n", (int)status, (int)output_size);
     }
 
     /* Test 4: Oversized data test */
