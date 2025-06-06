@@ -1,18 +1,12 @@
 /*
- * Copyright (c) 2017-2022, Arm Limited. All rights reserved.
+ * Copyright (c) 2025, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
-#ifndef __TFM_TFLM_APP_H__
-#define __TFM_TFLM_APP_H__
-
-#include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __APP_H__
+#define __APP_H__
 
 /**
  * \brief Simple macro to mark UNUSED variables
@@ -20,14 +14,34 @@ extern "C" {
  */
 #define UNUSED_VARIABLE(X) ((void)(X))
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
- * \brief Main TFLM thread entry point
- *
+ * \brief Test echo service functionality
  */
-void tflm_main(void *argument);
+void test_echo_service(void);
+
+/**
+ * \brief Test PSA encryption functionality
+ */
+void test_psa_encryption(void);
+
+/**
+ * \brief Test PSA hash functionality
+ */
+void test_psa_hash(void);
+
+/**
+ * \brief Run all TF-M tests
+ * \param[in] arg Thread argument (unused)
+ */
+void run_all_tests(void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __TFM_TFLM_APP_H__ */
+#endif /* __APP_H__ */

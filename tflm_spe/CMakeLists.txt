@@ -32,12 +32,8 @@ set(TEST_BL1_2 OFF CACHE BOOL "BL1_2 tests are disabled for tflm" FORCE)
 # tfm_s_tflm is IMPORTED to inform CMake that it has no source files.
 add_executable(tfm_s_tflm IMPORTED)
 
-# Use tflm-specific configuration file
+# Use TFLM-specific configuration file
 set(CONFIG_TFLM_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/config/config_tflm.cmake)
-
-# Add TFLM partition to the build
-set(TFM_EXTRA_PARTITION_PATHS ${CMAKE_CURRENT_LIST_DIR}/partitions)
-set(TFM_EXTRA_MANIFEST_LIST_FILES ${CMAKE_CURRENT_LIST_DIR}/partitions/tflm_manifest_list.yaml)
 
 include(ExternalProject)
 
@@ -47,8 +43,7 @@ ExternalProject_Add(TF-M
   INSTALL_DIR       api_ns
   CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
   CMAKE_ARGS        -DPROJECT_CONFIG_HEADER_FILE=${CMAKE_CURRENT_LIST_DIR}/config/config_tflm.h
-  CMAKE_ARGS        -DTFM_EXTRA_PARTITION_PATHS=${TFM_EXTRA_PARTITION_PATHS}
-  CMAKE_ARGS        -DTFM_EXTRA_MANIFEST_LIST_FILES=${TFM_EXTRA_MANIFEST_LIST_FILES}
+  CMAKE_ARGS        -DCONFIG_TFLM_CONFIG_FILE=${CONFIG_TFLM_CONFIG_FILE}
   CMAKE_CACHE_DEFAULT_ARGS ${TFM_CMDLINE_CONFIGS}
   PREFIX             "temp"
   BUILD_ALWAYS       ON
@@ -67,3 +62,10 @@ install(DIRECTORY   ${CONFIG_TFM_SOURCE_PATH}/secure_fw/partitions/initial_attes
 
 install(FILES       ${CONFIG_TFM_SOURCE_PATH}/secure_fw/spm/include/boot/tfm_boot_status.h
         DESTINATION ${CMAKE_BINARY_DIR}/api_ns/initial_attestation)
+
+# Install echo service interface files
+install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/include/tfm_echo_defs.h
+        DESTINATION ${CMAKE_BINARY_DIR}/api_ns/interface/include)
+
+install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/src/tfm_echo_api.c
+        DESTINATION ${CMAKE_BINARY_DIR}/api_ns/interface/src)

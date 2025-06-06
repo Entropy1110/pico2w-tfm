@@ -10,7 +10,7 @@
 #
 # cmd_line: the output argument to collect the arguments via command line
 #
-function(parse_tflm_flag cmd_line)
+function(parse_provision_flag cmd_line)
 
     # Force all regression tests to be disabled for TFLM applications
     set(TFM_NS_REG_TEST OFF)

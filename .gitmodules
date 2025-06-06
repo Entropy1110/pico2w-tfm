@@ -1,6 +1,0 @@
-[submodule "pico-sdk"]
-	path = pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "pico2w-trusted-firmware-m"]
-	path = pico2w-trusted-firmware-m
-	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git

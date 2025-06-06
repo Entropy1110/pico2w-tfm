@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Copyright (c) 2023-2024, Arm Limited. All rights reserved.
+# Copyright (c) 2025, Arm Limited. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -27,8 +27,6 @@ include(${CONFIG_SPE_PATH}/platform/config.cmake OPTIONAL)
 include(${TFM_TOOLCHAIN_FILE})
 project(tfm_ns LANGUAGES C ASM)
 
-# Provision functionality - no test configuration needed
-# Log functionality is preserved for provision applications
 # Include coprocessor check to make sure NS toolchain is compatible
 include(${CONFIG_SPE_PATH}/config/cp_check.cmake)
 
@@ -36,13 +34,11 @@ add_executable(tfm_ns)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../lib/ext ${CMAKE_BINARY_DIR}/lib/ext)
 add_subdirectory(../app_broker ${CMAKE_BINARY_DIR}/app_broker)
-add_subdirectory(../tflm_interface ${CMAKE_BINARY_DIR}/tflm_interface)
 
-############################# TFM NS provision app ##################################
+############################# TFM NS tflm app ##################################
 
 target_sources(tfm_ns
     PRIVATE
-        app/tflm_main.c
         $<$<BOOL:${CONFIG_GNU_SYSCALL_STUB_ENABLED}>:../app_broker/syscalls_stub.c>
 )
 
@@ -50,17 +46,12 @@ target_link_libraries(tfm_ns
     PRIVATE
         os_wrapper
         tfm_tflm_broker
-        tflm_ns_client
-)
-
-target_include_directories(tfm_ns
-    PRIVATE
-        # Remove this line as we now use tflm_ns_client library
+        tfm_api_ns
 )
 
 target_compile_definitions(tfm_ns
     PUBLIC
-        # Force TFM_NS_LOG to be always enabled for provision apps
+        # Force TFM_NS_LOG to be always enabled for tflm apps
         TFM_NS_LOG
 )
 

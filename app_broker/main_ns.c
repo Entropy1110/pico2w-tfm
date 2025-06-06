@@ -57,7 +57,7 @@ static const osThreadAttr_t thread_attr = {
  * \brief Static globals to hold RTOS related quantities,
  *        main thread
  */
-static osThreadFunc_t thread_func = tflm_main;
+static osThreadFunc_t thread_func = run_all_tests;
 
 #ifdef TFM_MULTI_CORE_NS_OS_MAILBOX_THREAD
 static osThreadFunc_t mailbox_thread_func = tfm_ns_mailbox_thread_runner;
