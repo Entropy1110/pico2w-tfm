@@ -42,21 +42,21 @@ void test_echo_service(void)
         printf("Output: '%s' (length: %d)\n", (char*)output_buffer, (int)output_size);
         
         if (memcmp(input_buffer, output_buffer, input_len) == 0 && output_size == input_len) {
-            printf("✓ Test 1 PASSED\n");
+            printf("Test 1 PASSED\n");
         } else {
-            printf("✗ Test 1 FAILED - data mismatch\n");
+            printf("Test 1 FAILED - data mismatch\n");
         }
     } else {
-        printf("✗ Test 1 FAILED - status: %d\n", (int)status);
+        printf("Test 1 FAILED - status: %d\n", (int)status);
     }
 
     /* Test 2: Empty data test */
     printf("\nTest 2: Empty data test\n");
     status = tfm_echo_service(NULL, 0, output_buffer, sizeof(output_buffer), &output_size);
     if (status == PSA_ERROR_INVALID_ARGUMENT) {
-        printf("✓ Test 2 PASSED - correctly rejected NULL input\n");
+        printf("Test 2 PASSED - correctly rejected NULL input\n");
     } else {
-        printf("✗ Test 2 FAILED - should reject NULL input\n");
+        printf("Test 2 FAILED - should reject NULL input\n");
     }
 
     /* Test 3: Maximum size test */
@@ -67,9 +67,9 @@ void test_echo_service(void)
                               &output_size);
     
     if (status == PSA_SUCCESS && output_size == TFM_ECHO_MAX_DATA_SIZE) {
-        printf("✓ Test 3 PASSED - maximum size data echoed correctly\n");
+        printf("Test 3 PASSED - maximum size data echoed correctly\n");
     } else {
-        printf("✗ Test 3 FAILED - status: %d, output_size: %d\n", (int)status, (int)output_size);
+        printf("Test 3 FAILED - status: %d, output_size: %d\n", (int)status, (int)output_size);
     }
 
     /* Test 4: Oversized data test */
@@ -79,9 +79,9 @@ void test_echo_service(void)
                               &output_size);
     
     if (status == PSA_ERROR_INVALID_ARGUMENT) {
-        printf("✓ Test 4 PASSED - correctly rejected oversized input\n");
+        printf("Test 4 PASSED - correctly rejected oversized input\n");
     } else {
-        printf("✗ Test 4 FAILED - should reject oversized input\n");
+        printf("Test 4 FAILED - should reject oversized input\n");
     }
 
     printf("=== Echo Service Tests Complete ===\n\n");

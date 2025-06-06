@@ -40,10 +40,10 @@ void test_psa_encryption(void)
     /* Initialize PSA Crypto */
     status = psa_crypto_init();
     if (status != PSA_SUCCESS) {
-        printf("❌ PSA crypto initialization failed: %d\n", (int)status);
+        printf("PSA crypto initialization failed: %d\n", (int)status);
         return;
     }
-    printf("✅ PSA crypto initialized\n");
+    printf("PSA crypto initialized\n");
 
     /* Set up key attributes */
     psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
@@ -54,10 +54,10 @@ void test_psa_encryption(void)
     /* Import the key */
     status = psa_import_key(&attributes, key_data, sizeof(key_data), &key_id);
     if (status != PSA_SUCCESS) {
-        printf("❌ Key import failed: %d\n", (int)status);
+        printf("Key import failed: %d\n", (int)status);
         return;
     }
-    printf("✅ AES-128 key imported (ID: %u)\n", (unsigned int)key_id);
+    printf("AES-128 key imported (ID: %u)\n", (unsigned int)key_id);
 
     /* Test 1: Encryption */
     printf("\nTest 1: AES-CBC-PKCS7 Encryption\n");
@@ -69,11 +69,11 @@ void test_psa_encryption(void)
                                &ciphertext_length);
     
     if (status != PSA_SUCCESS) {
-        printf("❌ Encryption failed: %d\n", (int)status);
+        printf("Encryption failed: %d\n", (int)status);
         goto cleanup;
     }
     
-    printf("✅ Encryption successful, ciphertext length: %zu bytes\n", ciphertext_length);
+    printf("Encryption successful, ciphertext length: %d bytes\n", (int)ciphertext_length);
     printf("Ciphertext: ");
     for (size_t i = 0; i < ciphertext_length; i++) {
         printf("%02x", ciphertext[i]);
@@ -89,26 +89,26 @@ void test_psa_encryption(void)
                                &decrypted_length);
     
     if (status != PSA_SUCCESS) {
-        printf("❌ Decryption failed: %d\n", (int)status);
+        printf("Decryption failed: %d\n", (int)status);
         goto cleanup;
     }
     
     decrypted[decrypted_length] = '\0'; /* Null terminate */
-    printf("✅ Decryption successful, decrypted length: %zu bytes\n", decrypted_length);
+    printf("Decryption successful, decrypted length: %d bytes\n", (int)decrypted_length);
     printf("Decrypted:  '%s'\n", (char*)decrypted);
 
     /* Verify the results */
     if (strlen((char*)plaintext) == decrypted_length && 
         memcmp(plaintext, decrypted, decrypted_length) == 0) {
-        printf("✅ Encryption/Decryption test PASSED\n");
+        printf("Encryption/Decryption test PASSED\n");
     } else {
-        printf("❌ Encryption/Decryption test FAILED - data mismatch\n");
+        printf("Encryption/Decryption test FAILED - data mismatch\n");
     }
 
 cleanup:
     /* Clean up the key */
     psa_destroy_key(key_id);
-    printf("🔑 Key destroyed\n");
+    printf("Key destroyed\n");
     
     printf("=== PSA Crypto Test Complete ===\n\n");
 }
@@ -135,11 +135,11 @@ void test_psa_hash(void)
                              &hash_length);
 
     if (status != PSA_SUCCESS) {
-        printf("❌ Hash computation failed: %d\n", (int)status);
+        printf("Hash computation failed: %d\n", (int)status);
         return;
     }
 
-    printf("✅ SHA-256 hash computed, length: %zu bytes\n", hash_length);
+    printf("SHA-256 hash computed, length: %d bytes\n", (int)hash_length);
     printf("Hash: ");
     for (size_t i = 0; i < hash_length; i++) {
         printf("%02x", hash[i]);
