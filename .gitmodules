@@ -1,0 +1,2 @@
+[submodule "pico2w-trusted-firmware-m"]
+	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git
