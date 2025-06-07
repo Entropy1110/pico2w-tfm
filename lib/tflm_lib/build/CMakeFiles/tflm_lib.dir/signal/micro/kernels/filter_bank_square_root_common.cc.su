@@ -1,0 +1,1 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_square_root_common.cc:25:14:TfLiteStatus tflite::FilterBankSquareRootPrepare(TfLiteContext*, TfLiteNode*)	48	static

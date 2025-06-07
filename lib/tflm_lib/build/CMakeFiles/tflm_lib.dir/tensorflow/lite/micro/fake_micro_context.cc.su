@@ -1,0 +1,16 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/micro_context.h:156:24:virtual TfLiteStatus tflite::MicroContext::SetAlternateProfiler(tflite::MicroProfilerInterface*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/micro_context.h:166:35:virtual tflite::MicroProfilerInterface* tflite::MicroContext::GetAlternateProfiler() const	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:44:15:virtual TfLiteTensor* tflite::FakeMicroContext::AllocateTempTfLiteTensor(int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:49:6:virtual void tflite::FakeMicroContext::DeallocateTempTfLiteTensor(TfLiteTensor*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:57:10:virtual uint8_t* tflite::FakeMicroContext::AllocateTempBuffer(size_t, size_t)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:62:6:virtual void tflite::FakeMicroContext::DeallocateTempBuffer(uint8_t*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:81:7:virtual void* tflite::FakeMicroContext::AllocatePersistentBuffer(size_t)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:119:14:virtual TfLiteStatus tflite::FakeMicroContext::set_external_context(void*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:124:7:virtual void* tflite::FakeMicroContext::external_context()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:126:13:virtual tflite::MicroGraph& tflite::FakeMicroContext::graph()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/fake_micro_context.h:30:3:virtual tflite::FakeMicroContext::~FakeMicroContext()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:67:19:virtual TfLiteEvalTensor* tflite::FakeMicroContext::GetEvalTensor(int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:111:7:virtual void* tflite::FakeMicroContext::GetScratchBuffer(int)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:90:14:virtual TfLiteStatus tflite::FakeMicroContext::RequestScratchBufferInArena(size_t, int*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:26:1:tflite::FakeMicroContext::FakeMicroContext(TfLiteTensor*, tflite::SingleArenaBufferAllocator*, tflite::MicroGraph*)	12	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/fake_micro_context.cc:53:6:bool tflite::FakeMicroContext::IsAllTempTfLiteTensorDeallocated()	0	static

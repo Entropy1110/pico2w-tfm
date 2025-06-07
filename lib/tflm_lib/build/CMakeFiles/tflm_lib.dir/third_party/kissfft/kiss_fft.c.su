@@ -1,0 +1,6 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:238:6:kf_work	152	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:339:14:kiss_fft_alloc	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:371:6:kiss_fft_stride	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:385:6:kiss_fft	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:391:6:kiss_fft_cleanup	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:396:5:kiss_fft_next_fast_size	12	static

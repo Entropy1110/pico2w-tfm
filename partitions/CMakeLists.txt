@@ -9,3 +9,6 @@ cmake_minimum_required(VERSION 3.21)
 
 # Include echo service partition
 add_subdirectory(echo_service)
+
+# Include TFLM inference partition
+add_subdirectory(tflm_inference)

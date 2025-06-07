@@ -1,0 +1,4 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/cortex_m_generic/debug_log.cc:35:6:void {anonymous}::InvokeDebugLogCallback(const char*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/cortex_m_generic/debug_log.cc:43:6:void RegisterDebugLogCallback(void (*)(const char*))	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/cortex_m_generic/debug_log.cc:47:6:void DebugLog(const char*, va_list)	264	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/cortex_m_generic/debug_log.cc:59:5:int DebugVsnprintf(char*, size_t, const char*, va_list)	0	static

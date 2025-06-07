@@ -12,9 +12,6 @@
 /* Maximum echo data size */
 #define TFM_ECHO_MAX_DATA_SIZE 256
 
-/* Service signal definition. Must match the value in the manifest file */
-#define TFM_ECHO_SERVICE_SIGNAL ((psa_signal_t)1)
-
 /* Initialization function for the echo service */
 psa_status_t echo_service_init(void)
 {
@@ -64,7 +61,7 @@ void echo_service_entry(void)
                         /* Echo the data (simple copy) */
                         memcpy(output_buffer, input_buffer, bytes_read);
                         
-                        /* Write output data */
+                        /* Write output data back to client */
                         psa_write(msg.handle, 0, output_buffer, bytes_read);
                         status = PSA_SUCCESS;
                     }

@@ -1,0 +1,7 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:30:25:static tflite::MicroResourceVariables* tflite::MicroResourceVariables::Create(tflite::MicroAllocator*, int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:70:14:TfLiteStatus tflite::MicroResourceVariables::Read(int, const TfLiteEvalTensor*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:83:14:TfLiteStatus tflite::MicroResourceVariables::Allocate(int, TfLiteContext*, const TfLiteTensor*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:116:14:TfLiteStatus tflite::MicroResourceVariables::Assign(int, size_t, const void*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:137:14:TfLiteStatus tflite::MicroResourceVariables::ResetAll()	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:146:5:int tflite::MicroResourceVariables::FindId(const char*, const char*)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_resource_variable.cc:44:5:int tflite::MicroResourceVariables::CreateIdIfNoneFound(const char*, const char*)	24	static

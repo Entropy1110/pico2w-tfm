@@ -1,0 +1,9 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:238:6:void kiss_fft_fixed16::kf_work(kiss_fft_cpx*, const kiss_fft_cpx*, size_t, int, int*, kiss_fft_cfg)	160	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:339:14:kiss_fft_fixed16::kiss_fft_state* kiss_fft_fixed16::kiss_fft_alloc(int, int, void*, size_t*)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:371:6:void kiss_fft_fixed16::kiss_fft_stride(kiss_fft_cfg, const kiss_fft_cpx*, kiss_fft_cpx*, int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:385:6:void kiss_fft_fixed16::kiss_fft(kiss_fft_cfg, const kiss_fft_cpx*, kiss_fft_cpx*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:391:6:void kiss_fft_fixed16::kiss_fft_cleanup()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/kiss_fft.c:396:5:int kiss_fft_fixed16::kiss_fft_next_fast_size(int)	12	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/tools/kiss_fftr.c:27:15:kiss_fft_fixed16::kiss_fftr_state* kiss_fft_fixed16::kiss_fftr_alloc(int, int, void*, size_t*)	56	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/tools/kiss_fftr.c:67:6:void kiss_fft_fixed16::kiss_fftr(kiss_fftr_cfg, const int16_t*, kiss_fft_cpx*)	72	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/kissfft/tools/kiss_fftr.c:123:6:void kiss_fft_fixed16::kiss_fftri(kiss_fftr_cfg, const kiss_fft_cpx*, int16_t*)	72	static

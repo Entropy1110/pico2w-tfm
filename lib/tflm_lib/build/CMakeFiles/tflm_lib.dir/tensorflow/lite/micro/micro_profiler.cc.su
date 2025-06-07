@@ -1,0 +1,9 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/micro_profiler.h:31:11:virtual tflite::MicroProfiler::~MicroProfiler()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:42:6:virtual void tflite::MicroProfiler::EndEvent(uint32_t)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:27:10:virtual uint32_t tflite::MicroProfiler::BeginEvent(const char*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:47:10:uint32_t tflite::MicroProfiler::GetTotalTicks() const	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:55:6:void tflite::MicroProfiler::Log() const	48	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:64:6:void tflite::MicroProfiler::LogCsv() const	24	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:112:5:int tflite::MicroProfiler::FindExistingOrNextPosition(const char*)	24	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:79:6:void tflite::MicroProfiler::LogTicksPerTagCsv()	48	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_profiler.cc:124:6:void tflite::MicroProfiler::ClearEvents()	8	static

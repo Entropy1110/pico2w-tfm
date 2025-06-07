@@ -1,0 +1,10 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/memory_planner/micro_memory_planner.h:62:24:virtual TfLiteStatus tflite::MicroMemoryPlanner::AddBuffer(int, int, int, int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/memory_planner/micro_memory_planner.h:79:24:virtual TfLiteStatus tflite::MicroMemoryPlanner::Init(unsigned char*, int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/memory_planner/micro_memory_planner.h:88:16:virtual void tflite::MicroMemoryPlanner::PrintMemoryPlan()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/memory_planner/linear_memory_planner.h:40:8:virtual bool tflite::LinearMemoryPlanner::preserves_all_tensors() const	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:27:1:virtual tflite::LinearMemoryPlanner::~LinearMemoryPlanner()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:41:8:virtual size_t tflite::LinearMemoryPlanner::GetMaximumMemorySize()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:43:5:virtual int tflite::LinearMemoryPlanner::GetBufferCount()	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:29:14:virtual TfLiteStatus tflite::LinearMemoryPlanner::AddBuffer(int, int, int)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:45:14:virtual TfLiteStatus tflite::LinearMemoryPlanner::GetOffsetForBuffer(int, int*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc:25:1:tflite::LinearMemoryPlanner::LinearMemoryPlanner()	0	static

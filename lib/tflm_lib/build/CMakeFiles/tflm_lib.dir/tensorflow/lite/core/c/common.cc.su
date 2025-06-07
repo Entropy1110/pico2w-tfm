@@ -1,0 +1,11 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:174:8:size_t TfLiteIntArrayGetSizeInBytes(int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:178:5:int TfLiteIntArrayEqual(const TfLiteIntArray*, const TfLiteIntArray*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:182:5:int TfLiteIntArrayEqualsArray(const TfLiteIntArray*, int, const int*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:201:5:int TfLiteFloatArrayGetSizeInBytes(int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:461:13:const char* TfLiteTypeGetName(TfLiteType)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:507:16:TfLiteDelegate TfLiteDelegateCreate()	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:510:26:TfLiteAllocationStrategy TfLiteTensorGetAllocationStrategy(const TfLiteTensor*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:536:20:TfLiteRunStability TfLiteTensorGetBufferAddressStability(const TfLiteTensor*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:562:20:TfLiteRunStability TfLiteTensorGetDataStability(const TfLiteTensor*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:590:15:TfLiteRunStep TfLiteTensorGetDataKnownStep(const TfLiteTensor*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/core/c/common.cc:619:15:TfLiteRunStep TfLiteTensorGetShapeKnownStep(const TfLiteTensor*)	0	static

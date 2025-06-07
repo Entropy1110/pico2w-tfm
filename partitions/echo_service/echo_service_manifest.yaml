@@ -9,7 +9,7 @@
   "name": "TFM_SP_ECHO_SERVICE",
   "type": "APPLICATION-ROT",
   "priority": "NORMAL",
-  "model": "SFN",
+  "model": "IPC",
   "entry_point": "echo_service_entry",
   "entry_init": "echo_service_init",
   "stack_size": "0x0800",

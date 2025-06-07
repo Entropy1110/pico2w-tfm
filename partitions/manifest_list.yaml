@@ -5,7 +5,7 @@
 #
 #-------------------------------------------------------------------------------
 {
-  "description": "TF-M out-of-tree echo partition manifest list",
+  "description": "TF-M out-of-tree partition manifest list",
   "type": "manifest_list",
   "version_major": 0,
   "version_minor": 1,
@@ -21,6 +21,20 @@
       "linker_pattern": {
         "library_list": [
           "*tfm_*partition_echo_service.*"
+        ]
+      }
+    },
+    {
+      "description": "TFM TFLM Inference Service Partition",
+      "manifest": "tflm_inference/tflm_inference_manifest.yaml",
+      "output_path": "secure_fw/partitions/tflm_inference",
+      "conditional": "TFM_PARTITION_TFLM_INFERENCE",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 445,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_tflm_inference.*"
         ]
       }
     }

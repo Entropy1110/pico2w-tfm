@@ -1,0 +1,8 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/depthwise_conv.cc:30:7:void* tflite::{anonymous}::DepthwiseConvInit(TfLiteContext*, const char*, size_t)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/runtime_shape.h:67:11:int32_t tflite::RuntimeShape::Dims(int) const	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/runtime_shape.h:96:7:int tflite::RuntimeShape::FlatSize() const	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/runtime_shape.h:133:12:int tflite::Offset(const RuntimeShape&, int, int, int, int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:265:12:int tflite::MatchingDim(const RuntimeShape&, int, const RuntimeShape&, int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/reference/integer_ops/depthwise_conv.h:24:13:void tflite::reference_integer_ops::DepthwiseConvPerChannel(const tflite::DepthwiseParams&, const int32_t*, const int32_t*, const tflite::RuntimeShape&, const int8_t*, const tflite::RuntimeShape&, const int8_t*, const tflite::RuntimeShape&, const int32_t*, const tflite::RuntimeShape&, int8_t*)	168	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/depthwise_conv.cc:36:14:TfLiteStatus tflite::{anonymous}::DepthwiseConvEval(TfLiteContext*, TfLiteNode*)	904	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/depthwise_conv.cc:185:18:TFLMRegistration tflite::Register_DEPTHWISE_CONV_2D()	16	static

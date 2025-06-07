@@ -1,0 +1,4 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/window.cc:44:7:void* tflite::{anonymous}::WindowInit(TfLiteContext*, const char*, size_t)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/window.cc:56:14:TfLiteStatus tflite::{anonymous}::WindowPrepare(TfLiteContext*, TfLiteNode*)	96	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/window.cc:90:14:TfLiteStatus tflite::{anonymous}::WindowEval(TfLiteContext*, TfLiteNode*)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/window.cc:116:19:TFLMRegistration* tflite::tflm_signal::Register_WINDOW()	16	static

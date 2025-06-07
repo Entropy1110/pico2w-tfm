@@ -21,25 +21,25 @@ target_sources(tfm_app_rot_partition_echo_service
 # The generated sources
 target_sources(tfm_app_rot_partition_echo_service
     PRIVATE
-        ${CMAKE_BINARY_DIR}/generated/partitions/echo_service/auto_generated/intermedia_echo_service_manifest.c
+        ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/echo_service/auto_generated/intermedia_echo_service_manifest.c
 )
 
 target_sources(tfm_partitions
     INTERFACE
-        ${CMAKE_BINARY_DIR}/generated/partitions/echo_service/auto_generated/load_info_echo_service_manifest.c
+        ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/echo_service/auto_generated/load_info_echo_service_manifest.c
 )
 
 # Set include directories
 target_include_directories(tfm_app_rot_partition_echo_service
     PRIVATE
         .
-        ${CMAKE_BINARY_DIR}/generated/partitions/echo_service
-        ${CMAKE_SOURCE_DIR}/../interface/include
+        ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/echo_service
+        ${CMAKE_SOURCE_DIR}/../../interface/include
 )
 
 target_include_directories(tfm_partitions
     INTERFACE
-        ${CMAKE_BINARY_DIR}/generated/partitions/echo_service
+        ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/echo_service
 )
 
 target_link_libraries(tfm_app_rot_partition_echo_service

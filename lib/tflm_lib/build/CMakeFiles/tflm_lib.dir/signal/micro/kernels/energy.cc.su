@@ -1,0 +1,4 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/energy.cc:86:14:TfLiteStatus tflite::{anonymous}::EnergyEval(TfLiteContext*, TfLiteNode*)	24	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/energy.cc:45:7:void* tflite::{anonymous}::EnergyInit(TfLiteContext*, const char*, size_t)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/energy.cc:63:14:TfLiteStatus tflite::{anonymous}::EnergyPrepare(TfLiteContext*, TfLiteNode*)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/energy.cc:106:19:TFLMRegistration* tflite::tflm_signal::Register_ENERGY()	16	static

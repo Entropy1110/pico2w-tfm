@@ -1,0 +1,2 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_square_root.cc:34:14:TfLiteStatus tflite::{anonymous}::FilterBankSquareRootEval(TfLiteContext*, TfLiteNode*)	24	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_square_root.cc:57:19:TFLMRegistration* tflite::tflm_signal::Register_FILTER_BANK_SQUARE_ROOT()	16	static

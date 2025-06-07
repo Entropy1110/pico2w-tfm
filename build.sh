@@ -19,6 +19,17 @@ echo "Cleaning previous build directories..."
 # rm -rf "${BUILD_DIR}/nspe"
 echo "Cleaning complete."
 
+# Build TFLM library first
+echo ""
+echo "Building TFLM library..."
+echo "========================"
+cd "${PROJECT_ROOT}/lib/tflm_lib"
+if [ ! -f "build/libtflm_lib.a" ]; then
+    ./build_tflm.sh
+else
+    echo "TFLM library already exists, skipping build."
+fi
+
 # Create build directories
 mkdir -p "${BUILD_DIR}/spe"
 mkdir -p "${BUILD_DIR}/nspe"
@@ -38,7 +49,8 @@ cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
   -DCONFIG_TFM_SOURCE_PATH="${PROJECT_ROOT}/pico2w-trusted-firmware-m" \
   -DTFM_NS_REG_TEST=OFF \
   -DTFM_S_REG_TEST=OFF \
-  -DTFM_PARTITION_ECHO_SERVICE=ON
+  -DTFM_PARTITION_ECHO_SERVICE=ON \
+  -DTFM_PARTITION_TFLM_INFERENCE=ON
 
 echo ""
 echo "Installing SPE build artifacts..."

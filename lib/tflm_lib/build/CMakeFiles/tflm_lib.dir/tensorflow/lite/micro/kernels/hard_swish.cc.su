@@ -1,0 +1,7 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/hard_swish.cc:33:7:void* tflite::{anonymous}::HardSwishInit(TfLiteContext*, const char*, size_t)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/gemmlowp/fixedpoint/fixedpoint.h:342:21:IntegerType gemmlowp::SaturatingRoundingDoublingHighMul(IntegerType, IntegerType) [with IntegerType = short int]	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:314:12:int tflite::MatchingFlatSize(const RuntimeShape&, const RuntimeShape&)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/hard_swish.cc:70:18:TFLMRegistration tflite::Register_HARD_SWISH()	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/third_party/gemmlowp/fixedpoint/fixedpoint.h:357:20:IntegerType gemmlowp::RoundingDivideByPOT(IntegerType, int) [with IntegerType = short int]	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/reference/hard_swish.h:61:13:void tflite::reference_ops::HardSwish(const tflite::HardSwishParams&, const tflite::RuntimeShape&, const T*, const tflite::RuntimeShape&, T*) [with T = signed char]	48	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/hard_swish.cc:38:14:TfLiteStatus tflite::{anonymous}::HardSwishEval(TfLiteContext*, TfLiteNode*)	160	static

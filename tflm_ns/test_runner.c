@@ -25,5 +25,11 @@ void run_all_tests(void* arg)
     /* Test 3: PSA Hash */
     test_psa_hash();
     
+    /* Test 4: TFLM Inference */
+    tflm_inference_test();
+    
+    /* Test 5: Audio Model Loading */
+    tflm_load_audio_model_test();
+    
     LOG_MSG("All tests completed!\r\n");
 }

@@ -1,0 +1,4 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_log.cc:86:14:TfLiteStatus tflite::{anonymous}::FilterBankLogEval(TfLiteContext*, TfLiteNode*)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_log.cc:45:7:void* tflite::{anonymous}::FilterBankLogInit(TfLiteContext*, const char*, size_t)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_log.cc:63:14:TfLiteStatus tflite::{anonymous}::FilterBankLogPrepare(TfLiteContext*, TfLiteNode*)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/filter_bank_log.cc:106:19:TFLMRegistration* tflite::tflm_signal::Register_FILTER_BANK_LOG()	16	static

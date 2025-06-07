@@ -1,0 +1,2 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/mul.cc:31:14:TfLiteStatus tflite::MulEval(TfLiteContext*, TfLiteNode*)	48	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/mul.cc:64:18:TFLMRegistration tflite::Register_MUL()	16	static

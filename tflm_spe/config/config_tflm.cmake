@@ -29,6 +29,7 @@ set(TFM_PARTITION_PROTECTED_STORAGE     OFF         CACHE BOOL      "Disable Pro
 set(TFM_PARTITION_INTERNAL_TRUSTED_STORAGE ON       CACHE BOOL      "Enable Internal Trusted Storage partition")
 set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL      "Enable Platform partition")
 set(TFM_PARTITION_ECHO_SERVICE           ON          CACHE BOOL      "Enable Echo Service partition")
+set(TFM_PARTITION_TFLM_INFERENCE        ON          CACHE BOOL      "Enable TFLM Inference partition")
 
 # Enable only essential crypto modules for PSA encryption
 set(CRYPTO_KEY_MODULE_ENABLED           ON          CACHE BOOL      "Enable key module for PSA")

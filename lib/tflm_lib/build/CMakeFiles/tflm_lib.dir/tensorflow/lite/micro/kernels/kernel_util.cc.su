@@ -1,0 +1,18 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:41:18:TFLMRegistration tflite::micro::RegisterOp(void* (*)(TfLiteContext*, const char*, size_t), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), void (*)(TfLiteContext*, void*), void (*)(TfLiteContext*, void*))	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:56:27:TFLMInferenceRegistration tflite::micro::RegisterOp(TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), void (*)(TfLiteContext*, void*))	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:67:19:TfLiteEvalTensor* tflite::micro::GetMutableEvalInput(const TfLiteContext*, const TfLiteNode*, int)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:82:25:const TfLiteEvalTensor* tflite::micro::GetEvalInput(const TfLiteContext*, const TfLiteNode*, int)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:88:19:TfLiteEvalTensor* tflite::micro::GetEvalOutput(const TfLiteContext*, const TfLiteNode*, int)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:95:6:bool tflite::micro::HaveSameShapes(const TfLiteEvalTensor*, const TfLiteEvalTensor*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:102:20:const tflite::RuntimeShape tflite::micro::GetTensorShape(const TfLiteEvalTensor*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:112:13:tflite::PaddingType tflite::micro::RuntimePaddingType(TfLitePadding)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:128:14:TfLiteStatus tflite::micro::CreateWritableTensorDimsWithCopy(TfLiteContext*, TfLiteTensor*, TfLiteEvalTensor*)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:151:8:size_t tflite::micro::ValidateAndGetTensorSizes(const TfLiteEvalTensor*, const TfLiteEvalTensor*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:161:14:TfLiteStatus tflite::micro::CopyOpInputsToOpOutputs(TfLiteContext*, TfLiteNode*)	32	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:188:6:void tflite::micro::PrintNBytes(const int8_t*, int, const char*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:201:6:void tflite::micro::PrintNBytes(const TfLiteEvalTensor*, int, const char*)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:209:6:void tflite::micro::PrintNBytes(const TfLiteTensor*, int, const char*)	0	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:214:14:TfLiteStatus tflite::micro::CopyOpInputsToSubgraphInputs(TfLiteContext*, TfLiteNode*, tflite::MicroGraph*, int, int)	48	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:234:14:TfLiteStatus tflite::micro::CopyOpOutputsToSubgraphInputs(TfLiteContext*, TfLiteNode*, tflite::MicroGraph*, int)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:251:14:TfLiteStatus tflite::micro::CopySubgraphOutputsToOpOutputs(TfLiteContext*, TfLiteNode*, tflite::MicroGraph*, int)	40	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/kernel_util.cc:269:18:TfLiteEvalTensor tflite::micro::MakeUnpackedInt4Tensor(TfLiteContext*, int, const TfLiteEvalTensor*)	56	static

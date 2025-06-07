@@ -1,0 +1,2 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc:24:14:TfLiteStatus tflite::ConvertTensorType(TensorType, TfLiteType*)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc:28:14:TfLiteStatus tflite::CallBuiltinParseFunction(TfLiteBridgeBuiltinParseFunction, const Operator*, BuiltinDataAllocator*, void**)	24	static

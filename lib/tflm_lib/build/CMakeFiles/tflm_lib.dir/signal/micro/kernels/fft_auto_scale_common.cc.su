@@ -1,0 +1,1 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/fft_auto_scale_common.cc:25:14:TfLiteStatus tflite::FftAutoScalePrepare(TfLiteContext*, TfLiteNode*)	48	static

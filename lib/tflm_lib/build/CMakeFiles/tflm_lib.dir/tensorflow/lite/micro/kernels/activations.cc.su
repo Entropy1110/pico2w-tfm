@@ -1,0 +1,7 @@
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:33:7:void* tflite::{anonymous}::ReluInit(TfLiteContext*, const char*, size_t)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:80:7:void* tflite::{anonymous}::Relu6Init(TfLiteContext*, const char*, size_t)	8	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:314:12:int tflite::MatchingFlatSize(const RuntimeShape&, const RuntimeShape&)	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:38:14:TfLiteStatus tflite::{anonymous}::ReluEval(TfLiteContext*, TfLiteNode*)	200	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:85:14:TfLiteStatus tflite::{anonymous}::Relu6Eval(TfLiteContext*, TfLiteNode*)	192	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:130:18:TFLMRegistration tflite::Register_RELU()	16	static
+/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations.cc:134:18:TFLMRegistration tflite::Register_RELU6()	16	static
