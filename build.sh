@@ -5,9 +5,8 @@
 
 set -e
 
-PROJECT_ROOT="/Users/entropy/pico2w-tfm-tflm"
+PROJECT_ROOT=$(dirname "$(realpath "$0")")
 BUILD_DIR="${PROJECT_ROOT}/build"
-PICO_SDK_PATH="/Users/entropy/pico2w-tfm-tflm/pico-sdk"
 
 echo "========================================"
 echo "TF-M Provision Application Build"
@@ -15,8 +14,15 @@ echo "========================================"
 
 # Clean previous build artifacts
 echo "Cleaning previous build directories..."
-# rm -rf "${BUILD_DIR}/spe"
-# rm -rf "${BUILD_DIR}/nspe"
+#if clean option is enabled, uncomment the following lines
+if [ "$1" == "clean" ]; then
+    echo "Cleaning SPE and NSPE build directories..."
+    rm -rf "${BUILD_DIR}/spe"
+    rm -rf "${BUILD_DIR}/nspe"
+else
+    echo "Skipping clean. Use 'clean' argument to remove previous builds."
+fi
+
 echo "Cleaning complete."
 
 # Build TFLM library first
@@ -25,7 +31,7 @@ echo "Building TFLM library..."
 echo "========================"
 cd "${PROJECT_ROOT}/lib/tflm_lib"
 if [ ! -f "build/libtflm_lib.a" ]; then
-    ./build_tflm.sh
+    rm -rf build && mkdir -p build && cd build && cmake .. && make -j8
 else
     echo "TFLM library already exists, skipping build."
 fi
@@ -34,11 +40,12 @@ fi
 mkdir -p "${BUILD_DIR}/spe"
 mkdir -p "${BUILD_DIR}/nspe"
 
+cd "${PROJECT_ROOT}"
+
 echo ""
 echo "Building SPE (Secure Processing Environment)..."
 echo "==============================================="
 
-cd "${PROJECT_ROOT}"
 
 cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
   -DTFM_PLATFORM=rpi/rp2350 \
