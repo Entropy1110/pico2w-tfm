@@ -1,3 +1,6 @@
 [submodule "pico2w-trusted-firmware-m"]
 	path = pico2w-trusted-firmware-m
 	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git
+[submodule "lib/cmsis_nn"]
+	path = lib/cmsis_nn
+	url = https://github.com/ARM-software/CMSIS-NN.git

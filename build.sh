@@ -16,26 +16,19 @@ echo "========================================"
 echo "Cleaning previous build directories..."
 #if clean option is enabled, uncomment the following lines
 if [ "$1" == "clean" ]; then
-    echo "Cleaning SPE, NSPE, TFLM build directories..."
+    echo "Cleaning SPE, NSPE, CMSIS-NN build directories..."
     rm -rf "${BUILD_DIR}/spe"
     rm -rf "${BUILD_DIR}/nspe"
-    rm -rf "${PROJECT_ROOT}/lib/tflm_lib/build"
 else
     echo "Skipping clean. Use 'clean' argument to remove previous builds."
 fi
 
 echo "Cleaning complete."
 
-# Build TFLM library first
+# CMSIS-NN is now integrated directly in the secure partition
 echo ""
-echo "Building TFLM library..."
-echo "========================"
-cd "${PROJECT_ROOT}/lib/tflm_lib"
-if [ ! -f "build/libtflm_lib.a" ]; then
-    rm -rf build && mkdir -p build && cd build && cmake .. && make -j8
-else
-    echo "TFLM library already exists, skipping build."
-fi
+echo "CMSIS-NN integrated directly in secure partition"
+echo "================================================"
 
 # Create build directories
 mkdir -p "${BUILD_DIR}/spe"
@@ -58,7 +51,7 @@ cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
   -DTFM_NS_REG_TEST=OFF \
   -DTFM_S_REG_TEST=OFF \
   -DTFM_PARTITION_ECHO_SERVICE=ON \
-  -DTFM_PARTITION_TFLM_INFERENCE=ON
+  -DTFM_PARTITION_CMSIS_NN_INFERENCE=ON
 
 echo ""
 echo "Installing SPE build artifacts..."

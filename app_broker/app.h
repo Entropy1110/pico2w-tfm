@@ -35,14 +35,10 @@ void test_psa_encryption(void);
 void test_psa_hash(void);
 
 /**
- * \brief Test TFLM inference functionality
+ * \brief Test CMSIS-NN inference functionality
  */
-void tflm_inference_test(void);
+void cmsis_nn_inference_test(void);
 
-/**
- * \brief Test audio model loading functionality
- */
-void tflm_load_audio_model_test(void);
 
 /**
  * \brief Run all TF-M tests
