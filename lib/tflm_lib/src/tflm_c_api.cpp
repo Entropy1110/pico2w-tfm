@@ -72,17 +72,24 @@ tflm_status_t tflm_create_interpreter(const uint8_t* model_data,
     interp->op_resolver.AddTanh();
     interp->op_resolver.AddRelu();
     interp->op_resolver.AddRelu6();
+    
+    // Add basic operations that are commonly available
+    // Note: Only adding operations that are confirmed to be available in the build
 
-    // Create interpreter (using static allocation to avoid heap)
-    static tflite::MicroInterpreter static_interpreter(
+    // Create interpreter using placement new for safe allocation
+    interp->interpreter = new(std::nothrow) tflite::MicroInterpreter(
         interp->model, interp->op_resolver, interp->tensor_arena,
         interp->tensor_arena_size);
     
-    interp->interpreter = &static_interpreter;
+    if (!interp->interpreter) {
+        delete interp;
+        return TFLM_ERROR_INSUFFICIENT_MEMORY;
+    }
 
     // Allocate tensors
     TfLiteStatus allocate_status = interp->interpreter->AllocateTensors();
     if (allocate_status != kTfLiteOk) {
+        delete interp->interpreter;
         delete interp;
         return TFLM_ERROR_INSUFFICIENT_MEMORY;
     }
@@ -96,6 +103,12 @@ tflm_status_t tflm_create_interpreter(const uint8_t* model_data,
 tflm_status_t tflm_destroy_interpreter(tflm_interpreter_t* interpreter) {
     if (!interpreter) {
         return TFLM_ERROR_INVALID_ARGUMENT;
+    }
+    
+    // Clean up the MicroInterpreter if it was allocated
+    if (interpreter->interpreter) {
+        delete interpreter->interpreter;
+        interpreter->interpreter = nullptr;
     }
     
     delete interpreter;

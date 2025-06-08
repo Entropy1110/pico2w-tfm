@@ -1,2 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/compiler/mlir/lite/schema/schema_utils.cc:45:17:tflite::BuiltinOperator tflite::GetBuiltinCode(const OperatorCode*)	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/compiler/mlir/lite/schema/schema_utils.cc:54:17:tflite::BuiltinOperator tflite::GetBuiltinCode(const OperatorCodeT*)	8	static

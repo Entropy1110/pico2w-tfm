@@ -14,9 +14,6 @@
 # EXTERNAL cache entries
 ########################
 
-//No help, variable specified on the command line.
-ARM_TOOLCHAIN:UNINITIALIZED=ON
-
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi/bin/arm-none-eabi-addr2line
 

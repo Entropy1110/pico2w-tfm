@@ -1,5 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:314:12:int tflite::MatchingFlatSize(const RuntimeShape&, const RuntimeShape&)	16	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations_common.cc:65:6:void tflite::ReluFloat(const RuntimeShape&, const float*, const RuntimeShape&, float*)	32	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations_common.cc:76:6:void tflite::Relu6Float(const RuntimeShape&, const float*, const RuntimeShape&, float*)	32	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations_common.cc:88:14:TfLiteStatus tflite::ReluPrepare(TfLiteContext*, TfLiteNode*)	104	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/activations_common.cc:114:14:TfLiteStatus tflite::Relu6Prepare(TfLiteContext*, TfLiteNode*)	40	static

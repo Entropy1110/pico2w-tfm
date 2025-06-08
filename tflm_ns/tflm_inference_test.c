@@ -5,6 +5,9 @@
 #include "tfm_tflm_inference_defs.h"
 #include "psa/client.h"
 
+// Include the real audio preprocessor model
+#include "../models/audio_preprocessor_int8.h"
+
 // Forward declarations
 extern psa_status_t tfm_tflm_load_model(const uint8_t* model_data, size_t model_size);
 extern psa_status_t tfm_tflm_set_input_data(const uint8_t* input_data, size_t input_size);
@@ -13,14 +16,6 @@ extern psa_status_t tfm_tflm_get_output_data(uint8_t* output_data, size_t output
 extern psa_status_t tfm_tflm_get_input_size(size_t* input_size);
 extern psa_status_t tfm_tflm_get_output_size(size_t* output_size);
 extern void tfm_tflm_cleanup(void);
-
-// Test data - simplified dummy model (normally would be the actual .tflite file)
-static const uint8_t test_model_data[] = {
-    // This is a placeholder - in real implementation, you would include the actual
-    // audio_preprocessor_int8.tflite model data here
-    0x1c, 0x00, 0x00, 0x00, 0x54, 0x46, 0x4c, 0x33  // TFL3 header
-    // ... rest of model data would go here
-};
 
 static void print_test_result(const char* test_name, psa_status_t result)
 {
@@ -42,6 +37,20 @@ static void print_hex_data(const char* label, const uint8_t* data, size_t size)
     printf("\n");
 }
 
+// Generate realistic audio input data for testing
+static void generate_audio_test_data(uint8_t* buffer, size_t size)
+{
+    // Audio preprocessor typically expects audio frame data
+    // For testing, generate a simple pattern that simulates audio data
+    for (size_t i = 0; i < size; i++) {
+        // Generate a simple sawtooth wave pattern with some variation
+        // This avoids needing math library functions like sin()
+        uint8_t base = (uint8_t)((i * 255) / size); // Sawtooth from 0 to 255
+        uint8_t noise = (uint8_t)((i * 17 + 123) % 32); // Simple pseudo-random noise
+        buffer[i] = (base + noise) & 0xFF; // Keep in range
+    }
+}
+
 void tflm_inference_test(void)
 {
     printf("\n========================================\n");
@@ -55,9 +64,9 @@ void tflm_inference_test(void)
     size_t actual_output_size = 0;
 
     // Test 1: Load model
-    printf("\n--- Test 1: Load Model ---\n");
-    printf("[TFLM Test] Loading test model (%d bytes)...\n", (int)sizeof(test_model_data));
-    status = tfm_tflm_load_model(test_model_data, sizeof(test_model_data));
+    printf("\n--- Test 1: Load Audio Preprocessor Model ---\n");
+    printf("[TFLM Test] Loading audio preprocessor model (%d bytes)...\n", (int)audio_preprocessor_int8_tflite_len);
+    status = tfm_tflm_load_model(audio_preprocessor_int8_tflite, audio_preprocessor_int8_tflite_len);
     print_test_result("Model Loading", status);
 
     if (status != PSA_SUCCESS) {
@@ -85,16 +94,14 @@ void tflm_inference_test(void)
     if (input_size > 0 && input_size <= TFM_TFLM_MAX_INPUT_SIZE) {
         printf("\n--- Test 4: Set Input Data ---\n");
         
-        // Create dummy input data
+        // Create realistic audio input data
         uint8_t* input_data = malloc(input_size);
         if (input_data) {
-            // Fill with test pattern
-            for (size_t i = 0; i < input_size; i++) {
-                input_data[i] = (uint8_t)(i % 256);
-            }
+            // Generate audio test data
+            generate_audio_test_data(input_data, input_size);
             
-            printf("[TFLM Test] Setting input data (%d bytes)...\n", (int)input_size);
-            print_hex_data("Input data", input_data, input_size);
+            printf("[TFLM Test] Setting audio input data (%d bytes)...\n", (int)input_size);
+            print_hex_data("Audio input data", input_data, input_size);
             
             status = tfm_tflm_set_input_data(input_data, input_size);
             print_test_result("Set Input Data", status);

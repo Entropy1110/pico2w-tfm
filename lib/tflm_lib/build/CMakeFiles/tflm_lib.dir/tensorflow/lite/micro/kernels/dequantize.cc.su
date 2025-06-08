@@ -1,4 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/dequantize.cc:31:7:void* tflite::DequantizeInit(TfLiteContext*, const char*, size_t)	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:314:12:int tflite::MatchingFlatSize(const RuntimeShape&, const RuntimeShape&)	16	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/dequantize.cc:37:14:TfLiteStatus tflite::DequantizeEval(TfLiteContext*, TfLiteNode*)	96	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/dequantize.cc:79:18:TFLMRegistration tflite::Register_DEQUANTIZE()	16	static

@@ -1,3 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_utils.cc:30:5:int tflite::ElementCount(const TfLiteIntArray&)	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_utils.cc:38:8:size_t tflite::EvalTensorBytes(const TfLiteEvalTensor*)	16	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/micro_utils.cc:45:6:void tflite::SignedSymmetricPerChannelQuantize(const float*, TfLiteIntArray*, int, int8_t*, float*, TfLiteType)	80	static

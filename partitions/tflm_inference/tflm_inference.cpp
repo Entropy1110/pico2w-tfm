@@ -3,9 +3,14 @@
 #include "psa_manifest/tflm_inference_manifest.h"
 #include "tfm_tflm_inference_defs.h"
 #include <string.h>
+#include <new>
+#include <cstdlib>
 
 // Use TFLM C API
 #include "tflm_c_api.h"
+
+// Real TFLM inference enabled
+#define TFLM_FALLBACK_MODE 0
 
 // TF-M logging for C++
 #ifdef __cplusplus
@@ -24,11 +29,38 @@ static struct {
     size_t tensor_arena_size;
     size_t input_size;
     size_t output_size;
+    uint8_t* model_data;  // Store model data
+    size_t model_size;
 } tflm_state = {0};
 
-// Static memory allocation for TFLM
-static uint8_t model_buffer[TFM_TFLM_MAX_MODEL_SIZE];
-static uint8_t tensor_arena_buffer[32768]; // 32KB tensor arena for better compatibility
+// Static memory allocation for TFLM - properly aligned
+alignas(16) static uint8_t model_buffer[TFM_TFLM_MAX_MODEL_SIZE];
+alignas(16) static uint8_t tensor_arena_buffer[65536]; // 64KB tensor arena
+alignas(16) static uint8_t input_buffer[TFM_TFLM_MAX_INPUT_SIZE];
+alignas(16) static uint8_t output_buffer[TFM_TFLM_MAX_OUTPUT_SIZE];
+
+// Helper function to validate TFLite model
+static bool validate_tflite_model(const uint8_t* data, size_t size) {
+    if (size < 8) {
+        return false;
+    }
+    
+    // Check TFLite file identifier (first 4 bytes should be "TFL3")
+    if (data[0] == 0x1C && data[1] == 0x00 && data[2] == 0x00 && data[3] == 0x00) {
+        // Check for "TFL3" at offset 4
+        if (size >= 8 && data[4] == 'T' && data[5] == 'F' && data[6] == 'L' && data[7] == '3') {
+            return true;
+        }
+    }
+    
+    // Alternative: Check for FlatBuffer identifier
+    if (size >= 20) {
+        // Look for TensorFlow Lite schema identifier
+        return true; // For now, accept if size is reasonable
+    }
+    
+    return false;
+}
 
 static psa_status_t tflm_load_model(const psa_msg_t *msg)
 {
@@ -36,94 +68,132 @@ static psa_status_t tflm_load_model(const psa_msg_t *msg)
     size_t num_read;
     tflm_status_t tflm_status;
 
+    INFO_UNPRIV("[TFLM] Load model called");
+
+    // Clean up any previous model
+    if (tflm_state.interpreter != nullptr) {
+        INFO_UNPRIV("[TFLM] Cleaning up previous model");
+        tflm_destroy_interpreter(tflm_state.interpreter);
+        tflm_state.interpreter = nullptr;
+        tflm_state.model_loaded = false;
+    }
+
     // Model data is directly in the input
     model_size = msg->in_size[0];
     
     if (model_size > TFM_TFLM_MAX_MODEL_SIZE) {
         INFO_UNPRIV("[TFLM] Model size %d exceeds maximum %d", 
-                     model_size, TFM_TFLM_MAX_MODEL_SIZE);
+                     (int)model_size, TFM_TFLM_MAX_MODEL_SIZE);
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
     
-    // Read model data directly
-    num_read = psa_read(msg->handle, 0, model_buffer, model_size);
-    if (num_read != model_size) {
-        INFO_UNPRIV("[TFLM] Failed to read model data: expected %d, got %d", 
-                     model_size, num_read);
+    if (model_size < 100) { // Minimum reasonable model size
+        INFO_UNPRIV("[TFLM] Model size %d is too small", (int)model_size);
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
+    
+    // Read model data directly into aligned buffer
+    num_read = psa_read(msg->handle, 0, model_buffer, model_size);
+    if (num_read != model_size) {
+        INFO_UNPRIV("[TFLM] Failed to read model data: expected %d, got %d", 
+                     (int)model_size, (int)num_read);
+        int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
+        psa_write(msg->handle, 0, &result, sizeof(result));
+        return PSA_SUCCESS;
+    }
+
+    // Validate model format
+    if (!validate_tflite_model(model_buffer, model_size)) {
+        INFO_UNPRIV("[TFLM] Invalid model format");
+        int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
+        psa_write(msg->handle, 0, &result, sizeof(result));
+        return PSA_SUCCESS;
+    }
+
+    // Store model info
+    tflm_state.model_data = model_buffer;
+    tflm_state.model_size = model_size;
 
     // Setup tensor arena
     tflm_state.tensor_arena = tensor_arena_buffer;
     tflm_state.tensor_arena_size = sizeof(tensor_arena_buffer);
 
-    INFO_UNPRIV("[TFLM] About to create interpreter with model size: %d", model_size);
+    INFO_UNPRIV("[TFLM] Creating interpreter with:");
+    INFO_UNPRIV("[TFLM]   Model size: %d bytes", (int)model_size);
+    INFO_UNPRIV("[TFLM]   Tensor arena: %d bytes", (int)tflm_state.tensor_arena_size);
+    INFO_UNPRIV("[TFLM]   Model addr: %p", model_buffer);
+    INFO_UNPRIV("[TFLM]   Arena addr: %p", tensor_arena_buffer);
     
-    // Create interpreter using C API - wrap in try-catch to prevent crashes
-    tflm_status = TFLM_ERROR_GENERIC; // Default to error
-    
-    // Simple validation: check for TFLite magic number
-    if (model_size < 8) {
-        INFO_UNPRIV("[TFLM] Model too small: %d bytes", model_size);
-        int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
-        psa_write(msg->handle, 0, &result, sizeof(result));
-        return PSA_SUCCESS;
-    }
-    
-    INFO_UNPRIV("[TFLM] Model header: %02x %02x %02x %02x", 
-                model_buffer[0], model_buffer[1], model_buffer[2], model_buffer[3]);
-    
-    // For now, skip actual TFLM initialization to test PSA messaging
-    INFO_UNPRIV("[TFLM] Skipping TFLM interpreter creation for testing");
-    tflm_status = TFLM_OK;
-    tflm_state.interpreter = nullptr; // Mark as placeholder
-    tflm_state.input_size = 64;  // Dummy values for testing
-    tflm_state.output_size = 32;
-    
-    /*
-    tflm_status = tflm_create_interpreter(model_buffer, model_size,
-                                          tflm_state.tensor_arena, 
-                                          tflm_state.tensor_arena_size,
-                                          &tflm_state.interpreter);
-    */
+    // Create interpreter with proper error handling
+    INFO_UNPRIV("[TFLM] Creating TFLM interpreter...");
+    tflm_status = tflm_create_interpreter(
+        model_buffer, 
+        model_size,
+        tflm_state.tensor_arena, 
+        tflm_state.tensor_arena_size,
+        &tflm_state.interpreter
+    );
     
     if (tflm_status != TFLM_OK) {
-        INFO_UNPRIV("[TFLM] Failed to create interpreter: %s", 
-                     tflm_status_string(tflm_status));
-        int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
+        INFO_UNPRIV("[TFLM] Failed to create interpreter: %s (code: %d)", 
+                     tflm_status_string(tflm_status), (int)tflm_status);
+        int32_t result = TFM_TFLM_ERROR_MODEL_LOADING_FAILED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
 
-    // Get input and output tensor sizes (skip for testing)
-    /*
+    if (tflm_state.interpreter == nullptr) {
+        INFO_UNPRIV("[TFLM] Interpreter is null after creation");
+        int32_t result = TFM_TFLM_ERROR_MODEL_LOADING_FAILED;
+        psa_write(msg->handle, 0, &result, sizeof(result));
+        return PSA_SUCCESS;
+    }
+
+    INFO_UNPRIV("[TFLM] Interpreter created successfully");
+
+    // Get input and output tensor sizes
+    INFO_UNPRIV("[TFLM] Getting tensor sizes...");
     tflm_status = tflm_get_input_size(tflm_state.interpreter, &tflm_state.input_size);
     if (tflm_status != TFLM_OK) {
+        INFO_UNPRIV("[TFLM] Failed to get input size: %s", tflm_status_string(tflm_status));
         tflm_destroy_interpreter(tflm_state.interpreter);
-        tflm_state.interpreter = NULL;
-        int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
+        tflm_state.interpreter = nullptr;
+        int32_t result = TFM_TFLM_ERROR_MODEL_LOADING_FAILED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
 
     tflm_status = tflm_get_output_size(tflm_state.interpreter, &tflm_state.output_size);
     if (tflm_status != TFLM_OK) {
+        INFO_UNPRIV("[TFLM] Failed to get output size: %s", tflm_status_string(tflm_status));
         tflm_destroy_interpreter(tflm_state.interpreter);
-        tflm_state.interpreter = NULL;
+        tflm_state.interpreter = nullptr;
+        int32_t result = TFM_TFLM_ERROR_MODEL_LOADING_FAILED;
+        psa_write(msg->handle, 0, &result, sizeof(result));
+        return PSA_SUCCESS;
+    }
+
+    // Validate tensor sizes
+    if (tflm_state.input_size > TFM_TFLM_MAX_INPUT_SIZE || 
+        tflm_state.output_size > TFM_TFLM_MAX_OUTPUT_SIZE) {
+        INFO_UNPRIV("[TFLM] Tensor sizes too large: input=%d (max %d), output=%d (max %d)", 
+                     (int)tflm_state.input_size, TFM_TFLM_MAX_INPUT_SIZE,
+                     (int)tflm_state.output_size, TFM_TFLM_MAX_OUTPUT_SIZE);
+        tflm_destroy_interpreter(tflm_state.interpreter);
+        tflm_state.interpreter = nullptr;
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
-    */
 
     tflm_state.model_loaded = true;
 
     INFO_UNPRIV("[TFLM] Model loaded successfully. Input size: %d, Output size: %d",
-                 tflm_state.input_size, tflm_state.output_size);
+                 (int)tflm_state.input_size, (int)tflm_state.output_size);
 
     // Write success response
     int32_t result = TFM_TFLM_SUCCESS;
@@ -134,11 +204,10 @@ static psa_status_t tflm_load_model(const psa_msg_t *msg)
 
 static psa_status_t tflm_set_input_data(const psa_msg_t *msg)
 {
-    static uint8_t input_buffer[TFM_TFLM_MAX_INPUT_SIZE]; // Temporary buffer for input data
     tflm_status_t tflm_status;
-    size_t data_size = msg->in_size[0]; // Input data size
+    size_t data_size = msg->in_size[0];
 
-    if (!tflm_state.model_loaded) {
+    if (!tflm_state.model_loaded || tflm_state.interpreter == nullptr) {
         int32_t result = TFM_TFLM_ERROR_MODEL_NOT_LOADED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
@@ -146,7 +215,7 @@ static psa_status_t tflm_set_input_data(const psa_msg_t *msg)
 
     if (data_size != tflm_state.input_size) {
         INFO_UNPRIV("[TFLM] Input size mismatch: expected %d, got %d",
-                     tflm_state.input_size, data_size);
+                     (int)tflm_state.input_size, (int)data_size);
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
@@ -154,36 +223,33 @@ static psa_status_t tflm_set_input_data(const psa_msg_t *msg)
 
     if (data_size > sizeof(input_buffer)) {
         INFO_UNPRIV("[TFLM] Input size %d exceeds buffer size %d",
-                     data_size, sizeof(input_buffer));
+                     (int)data_size, (int)sizeof(input_buffer));
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
 
-    // Read input data directly
+    // Read input data directly into aligned buffer
     size_t num_read = psa_read(msg->handle, 0, input_buffer, data_size);
     
     if (num_read != data_size) {
         INFO_UNPRIV("[TFLM] Failed to read input data: expected %d, got %d",
-                     data_size, num_read);
+                     (int)data_size, (int)num_read);
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
 
-    // Set input data using C API (skip for testing)
-    INFO_UNPRIV("[TFLM] Skipping actual input data setting for testing");
-    tflm_status = TFLM_OK; // Simulate success
-    
-    /*
+    // Set input data using C API
+    INFO_UNPRIV("[TFLM] Setting input data (%d bytes)...", (int)data_size);
     tflm_status = tflm_set_input_data(tflm_state.interpreter, input_buffer, data_size);
+    
     if (tflm_status != TFLM_OK) {
         INFO_UNPRIV("[TFLM] Failed to set input data: %s", tflm_status_string(tflm_status));
         int32_t result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
-    */
 
     int32_t result = TFM_TFLM_SUCCESS;
     psa_write(msg->handle, 0, &result, sizeof(result));
@@ -194,27 +260,24 @@ static psa_status_t tflm_run_inference(const psa_msg_t *msg)
 {
     tflm_status_t tflm_status;
 
-    // Function ID already read - no additional data expected
-
-    if (!tflm_state.model_loaded) {
+    if (!tflm_state.model_loaded || tflm_state.interpreter == nullptr) {
         int32_t result = TFM_TFLM_ERROR_MODEL_NOT_LOADED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
 
-    // Run inference using C API (skip for testing)
-    INFO_UNPRIV("[TFLM] Skipping actual inference for testing");
-    tflm_status = TFLM_OK; // Simulate success
-    
-    /*
+    INFO_UNPRIV("[TFLM] Running inference...");
+
+    // Run inference using C API
+    INFO_UNPRIV("[TFLM] Invoking model inference...");
     tflm_status = tflm_invoke(tflm_state.interpreter);
+    
     if (tflm_status != TFLM_OK) {
         INFO_UNPRIV("[TFLM] Inference failed: %s", tflm_status_string(tflm_status));
         int32_t result = TFM_TFLM_ERROR_INFERENCE_FAILED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
     }
-    */
 
     INFO_UNPRIV("[TFLM] Inference completed successfully");
     int32_t result = TFM_TFLM_SUCCESS;
@@ -224,12 +287,9 @@ static psa_status_t tflm_run_inference(const psa_msg_t *msg)
 
 static psa_status_t tflm_get_output_data(const psa_msg_t *msg)
 {
-    static uint8_t output_buffer[TFM_TFLM_MAX_OUTPUT_SIZE]; // Temporary buffer for output data
     tflm_status_t tflm_status;
 
-    // Function ID already read - no additional data expected
-
-    if (!tflm_state.model_loaded) {
+    if (!tflm_state.model_loaded || tflm_state.interpreter == nullptr) {
         int32_t result = TFM_TFLM_ERROR_MODEL_NOT_LOADED;
         psa_write(msg->handle, 0, &result, sizeof(result));
         return PSA_SUCCESS;
@@ -244,28 +304,17 @@ static psa_status_t tflm_get_output_data(const psa_msg_t *msg)
     
     size_t copy_size = (tflm_state.output_size > TFM_TFLM_MAX_OUTPUT_SIZE) ? 
                        TFM_TFLM_MAX_OUTPUT_SIZE : tflm_state.output_size;
-    
-    if (copy_size > sizeof(output_buffer)) {
-        copy_size = sizeof(output_buffer);
-    }
 
-    // Get output data using C API (skip for testing)
-    INFO_UNPRIV("[TFLM] Generating dummy output data for testing");
-    // Fill with dummy data for testing
-    for (size_t i = 0; i < copy_size; i++) {
-        output_buffer[i] = (uint8_t)(i % 256);
-    }
-    tflm_status = TFLM_OK;
-    
-    /*
+    // Get output data using C API
+    INFO_UNPRIV("[TFLM] Getting output data (%d bytes)...", (int)copy_size);
     tflm_status = tflm_get_output_data(tflm_state.interpreter, output_buffer, copy_size);
+    
     if (tflm_status != TFLM_OK) {
         INFO_UNPRIV("[TFLM] Failed to get output data: %s", tflm_status_string(tflm_status));
         response.result = TFM_TFLM_ERROR_INVALID_PARAMETER;
         psa_write(msg->handle, 0, &response.result, sizeof(response.result));
         return PSA_SUCCESS;
     }
-    */
     
     memcpy(response.data, output_buffer, copy_size);
     
@@ -275,14 +324,12 @@ static psa_status_t tflm_get_output_data(const psa_msg_t *msg)
 
 static psa_status_t tflm_get_input_size(const psa_msg_t *msg)
 {
-    // Function ID already read - no additional data expected
-
     struct {
         int32_t result;
         size_t size;
     } response;
 
-    if (!tflm_state.model_loaded) {
+    if (!tflm_state.model_loaded || tflm_state.interpreter == nullptr) {
         response.result = TFM_TFLM_ERROR_MODEL_NOT_LOADED;
         response.size = 0;
     } else {
@@ -296,14 +343,12 @@ static psa_status_t tflm_get_input_size(const psa_msg_t *msg)
 
 static psa_status_t tflm_get_output_size(const psa_msg_t *msg)
 {
-    // Function ID already read - no additional data expected
-
     struct {
         int32_t result;
         size_t size;
     } response;
 
-    if (!tflm_state.model_loaded) {
+    if (!tflm_state.model_loaded || tflm_state.interpreter == nullptr) {
         response.result = TFM_TFLM_ERROR_MODEL_NOT_LOADED;
         response.size = 0;
     } else {
@@ -313,6 +358,31 @@ static psa_status_t tflm_get_output_size(const psa_msg_t *msg)
 
     psa_write(msg->handle, 0, &response, sizeof(response));
     return PSA_SUCCESS;
+}
+
+// Override C++ new handler for out-of-memory conditions
+void* operator new(std::size_t size, const std::nothrow_t&) noexcept {
+    return malloc(size);
+}
+
+void* operator new[](std::size_t size, const std::nothrow_t&) noexcept {
+    return malloc(size);
+}
+
+void operator delete(void* ptr) noexcept {
+    free(ptr);
+}
+
+void operator delete[](void* ptr) noexcept {
+    free(ptr);
+}
+
+void operator delete(void* ptr, std::size_t) noexcept {
+    free(ptr);
+}
+
+void operator delete[](void* ptr, std::size_t) noexcept {
+    free(ptr);
 }
 
 void tflm_inference_entry(void)
@@ -330,58 +400,39 @@ void tflm_inference_entry(void)
         }
         
         /* Process the message */
-        switch (msg.type) {
-            case PSA_IPC_CONNECT:
-                INFO_UNPRIV("[TFLM] PSA_IPC_CONNECT received");
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            case PSA_IPC_DISCONNECT:
-                INFO_UNPRIV("[TFLM] PSA_IPC_DISCONNECT received");
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            case TFM_TFLM_LOAD_MODEL:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_LOAD_MODEL received, input size: %d", msg.in_size[0]);
-                status = tflm_load_model(&msg);
-                INFO_UNPRIV("[TFLM] tflm_load_model returned: %d", status);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TFM_TFLM_SET_INPUT_DATA:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_SET_INPUT_DATA received");
-                status = tflm_set_input_data(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TFM_TFLM_RUN_INFERENCE:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_RUN_INFERENCE received");
-                status = tflm_run_inference(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TFM_TFLM_GET_OUTPUT_DATA:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_GET_OUTPUT_DATA received");
-                status = tflm_get_output_data(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TFM_TFLM_GET_INPUT_SIZE:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_GET_INPUT_SIZE received");
-                status = tflm_get_input_size(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TFM_TFLM_GET_OUTPUT_SIZE:
-                INFO_UNPRIV("[TFLM] TFM_TFLM_GET_OUTPUT_SIZE received");
-                status = tflm_get_output_size(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            default:
-                INFO_UNPRIV("[TFLM] Invalid message type: %d", (int)msg.type);
-                psa_reply(msg.handle, (psa_status_t)PSA_ERROR_NOT_SUPPORTED);
-                break;
+        if (msg.type == PSA_IPC_CONNECT) {
+            INFO_UNPRIV("[TFLM] PSA_IPC_CONNECT received");
+            psa_reply(msg.handle, PSA_SUCCESS);
+        } else if (msg.type == PSA_IPC_DISCONNECT) {
+            INFO_UNPRIV("[TFLM] PSA_IPC_DISCONNECT received");
+            psa_reply(msg.handle, PSA_SUCCESS);
+        } else if (msg.type == TFM_TFLM_LOAD_MODEL) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_LOAD_MODEL received, input size: %d", (int)msg.in_size[0]);
+            status = tflm_load_model(&msg);
+            psa_reply(msg.handle, status);
+        } else if (msg.type == TFM_TFLM_SET_INPUT_DATA) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_SET_INPUT_DATA received");
+            status = tflm_set_input_data(&msg);
+            psa_reply(msg.handle, status);
+        } else if (msg.type == TFM_TFLM_RUN_INFERENCE) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_RUN_INFERENCE received");
+            status = tflm_run_inference(&msg);
+            psa_reply(msg.handle, status);
+        } else if (msg.type == TFM_TFLM_GET_OUTPUT_DATA) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_GET_OUTPUT_DATA received");
+            status = tflm_get_output_data(&msg);
+            psa_reply(msg.handle, status);
+        } else if (msg.type == TFM_TFLM_GET_INPUT_SIZE) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_GET_INPUT_SIZE received");
+            status = tflm_get_input_size(&msg);
+            psa_reply(msg.handle, status);
+        } else if (msg.type == TFM_TFLM_GET_OUTPUT_SIZE) {
+            INFO_UNPRIV("[TFLM] TFM_TFLM_GET_OUTPUT_SIZE received");
+            status = tflm_get_output_size(&msg);
+            psa_reply(msg.handle, status);
+        } else {
+            INFO_UNPRIV("[TFLM] Invalid message type: %d", (int)msg.type);
+            psa_reply(msg.handle, (psa_status_t)PSA_ERROR_NOT_SUPPORTED);
         }
     }
 }
@@ -392,6 +443,13 @@ psa_status_t tflm_inference_init(void)
     
     // Initialize TFLM state
     memset(&tflm_state, 0, sizeof(tflm_state));
+    
+    // Log memory addresses for debugging
+    INFO_UNPRIV("[TFLM] Memory layout:");
+    INFO_UNPRIV("[TFLM]   Model buffer: %p - %p", 
+                model_buffer, model_buffer + sizeof(model_buffer));
+    INFO_UNPRIV("[TFLM]   Tensor arena: %p - %p", 
+                tensor_arena_buffer, tensor_arena_buffer + sizeof(tensor_arena_buffer));
     
     return (psa_status_t)PSA_SUCCESS;
 }

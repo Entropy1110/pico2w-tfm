@@ -1,3 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/micro_tensor_utils.cc:33:6:void tflite::PortableApplySigmoidToVector(const float*, int, float*)	24	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/micro_tensor_utils.cc:40:6:void tflite::PortableApplyTanhToVector(const float*, int, float*)	24	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/micro_tensor_utils.cc:46:6:void tflite::PortableApplyActivationToVector(const float*, int, TfLiteFusedActivation, float*)	4	static

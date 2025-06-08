@@ -16,9 +16,10 @@ echo "========================================"
 echo "Cleaning previous build directories..."
 #if clean option is enabled, uncomment the following lines
 if [ "$1" == "clean" ]; then
-    echo "Cleaning SPE and NSPE build directories..."
+    echo "Cleaning SPE, NSPE, TFLM build directories..."
     rm -rf "${BUILD_DIR}/spe"
     rm -rf "${BUILD_DIR}/nspe"
+    rm -rf "${PROJECT_ROOT}/lib/tflm_lib/build"
 else
     echo "Skipping clean. Use 'clean' argument to remove previous builds."
 fi

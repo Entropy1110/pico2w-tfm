@@ -106,4 +106,8 @@ target_compile_options(tfm_app_rot_partition_tflm_inference
         $<$<COMPILE_LANGUAGE:CXX>:-fno-threadsafe-statics>
         $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
         $<$<COMPILE_LANGUAGE:CXX>:-Wno-missing-field-initializers>
+        # Optimize for size to reduce memory usage
+        $<$<COMPILE_LANGUAGE:CXX>:-Os>
+        # Enable debug symbols for better crash analysis
+        $<$<COMPILE_LANGUAGE:CXX>:-g>
 )

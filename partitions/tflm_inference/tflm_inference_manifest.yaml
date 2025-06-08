@@ -13,7 +13,7 @@
   "entry_point": "tflm_inference_entry",
   "entry_init": "tflm_inference_init",
   "stack_size": "0x4000",
-  "heap_size": "0x2000",
+  "heap_size": "0x4000",
   "services": [
     {
       "name": "TFM_TFLM_INFERENCE_SERVICE",

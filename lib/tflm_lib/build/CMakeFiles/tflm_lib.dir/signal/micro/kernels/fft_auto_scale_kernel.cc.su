@@ -1,2 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/fft_auto_scale_kernel.cc:35:14:TfLiteStatus tflite::{anonymous}::FftAutoScaleEval(TfLiteContext*, TfLiteNode*)	24	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/signal/micro/kernels/fft_auto_scale_kernel.cc:57:19:TFLMRegistration* tflite::tflm_signal::Register_FFT_AUTO_SCALE()	16	static

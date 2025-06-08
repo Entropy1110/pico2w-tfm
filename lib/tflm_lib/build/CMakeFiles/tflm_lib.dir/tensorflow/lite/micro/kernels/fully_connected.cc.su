@@ -1,9 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/fully_connected.cc:29:7:void* tflite::{anonymous}::FullyConnectedInit(TfLiteContext*, const char*, size_t)	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/fully_connected.cc:36:14:TfLiteStatus tflite::{anonymous}::FullyConnectedPrepare(TfLiteContext*, TfLiteNode*)	96	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/runtime_shape.h:67:11:int32_t tflite::RuntimeShape::Dims(int) const	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/types.h:520:12:int tflite::FlatSizeSkipDim(const RuntimeShape&, int)	16	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/kernels/internal/reference/integer_ops/fully_connected.h:136:6:void tflite::reference_integer_ops::FullyConnected(const tflite::FullyConnectedParams&, const tflite::RuntimeShape&, const InputType*, const tflite::RuntimeShape&, const WeightType*, const tflite::RuntimeShape&, const BiasType*, const tflite::RuntimeShape&, OutputType*) [with InputType = signed char; WeightType = signed char; OutputType = signed char; BiasType = long int]	88	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/fully_connected.cc:354:18:TFLMRegistration tflite::Register_FULLY_CONNECTED()	16	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/fully_connected.cc:359:27:TFLMInferenceRegistration tflite::RegisterInference_FULLY_CONNECTED()	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/./tensorflow/lite/micro/kernels/kernel_util.h:83:10:const T* tflite::micro::GetTensorData(const TfLiteEvalTensor*) [with T = signed char]	8	static
-/Users/entropy/pico2w-tfm-tflm/lib/tflm_lib/tensorflow/lite/micro/kernels/fully_connected.cc:108:14:TfLiteStatus tflite::{anonymous}::FullyConnectedEval(TfLiteContext*, TfLiteNode*)	1336	static
