@@ -4,3 +4,6 @@
 [submodule "lib/cmsis_nn"]
 	path = lib/cmsis_nn
 	url = https://github.com/ARM-software/CMSIS-NN.git
+[submodule "lib/tinymaix"]
+	path = lib/tinymaix
+	url = https://github.com/sipeed/TinyMaix.git

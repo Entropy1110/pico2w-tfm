@@ -25,16 +25,16 @@
       }
     },
     {
-      "description": "TFM CMSIS-NN Inference Service Partition",
-      "manifest": "cmsis_nn_inference/cmsis_nn_inference_manifest.yaml",
-      "output_path": "secure_fw/partitions/cmsis_nn_inference",
-      "conditional": "TFM_PARTITION_CMSIS_NN_INFERENCE",
+      "description": "TFM TinyMaix Inference Service Partition",
+      "manifest": "tinymaix_inference/tinymaix_inference_manifest.yaml",
+      "output_path": "secure_fw/partitions/tinymaix_inference",
+      "conditional": "TFM_PARTITION_TINYMAIX_INFERENCE",
       "version_major": 0,
       "version_minor": 1,
       "pid": 445,
       "linker_pattern": {
         "library_list": [
-          "*tfm_*partition_cmsis_nn_inference.*"
+          "*tfm_*partition_tinymaix_inference.*"
         ]
       }
     }

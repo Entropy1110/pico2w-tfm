@@ -69,3 +69,10 @@ install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/include/tfm_echo_defs
 
 install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/src/tfm_echo_api.c
         DESTINATION ${CMAKE_BINARY_DIR}/api_ns/interface/src)
+
+# Install TinyMaix inference service interface files
+install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/include/tfm_tinymaix_inference_defs.h
+        DESTINATION ${CMAKE_BINARY_DIR}/api_ns/interface/include)
+
+install(FILES       ${CMAKE_CURRENT_LIST_DIR}/../interface/src/tfm_tinymaix_inference_api.c
+        DESTINATION ${CMAKE_BINARY_DIR}/api_ns/interface/src)

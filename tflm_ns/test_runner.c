@@ -25,8 +25,8 @@ void run_all_tests(void* arg)
     /* Test 3: PSA Hash */
     test_psa_hash();
     
-    /* Test 4: CMSIS-NN Inference */
-    cmsis_nn_inference_test();
+    /* Test 4: TinyMaix Comprehensive Suite */
+    test_tinymaix_comprehensive_suite();
 
     
     LOG_MSG("All tests completed!\r\n");

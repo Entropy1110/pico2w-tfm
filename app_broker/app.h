@@ -35,9 +35,25 @@ void test_psa_encryption(void);
 void test_psa_hash(void);
 
 /**
- * \brief Test CMSIS-NN inference functionality
+ * \brief Test TinyMaix inference functionality (basic test)
  */
-void cmsis_nn_inference_test(void);
+void test_tinymaix_inference(void);
+
+/**
+ * \brief Test TinyMaix performance
+ */
+void test_tinymaix_performance(void);
+
+/**
+ * \brief Test TinyMaix error handling
+ */
+void test_tinymaix_error_handling(void);
+
+
+/**
+ * \brief Run comprehensive TinyMaix test suite
+ */
+void test_tinymaix_comprehensive_suite(void);
 
 
 /**

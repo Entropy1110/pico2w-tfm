@@ -1,3 +1,0 @@
-/Users/entropy/pico2w-tfm-tflm/lib/cmsis_nn_lib/build/CMakeFiles/cmsis_nn_lib.dir
-/Users/entropy/pico2w-tfm-tflm/lib/cmsis_nn_lib/build/CMakeFiles/edit_cache.dir
-/Users/entropy/pico2w-tfm-tflm/lib/cmsis_nn_lib/build/CMakeFiles/rebuild_cache.dir

@@ -16,7 +16,7 @@ echo "========================================"
 echo "Cleaning previous build directories..."
 #if clean option is enabled, uncomment the following lines
 if [ "$1" == "clean" ]; then
-    echo "Cleaning SPE, NSPE, CMSIS-NN build directories..."
+    echo "Cleaning SPE, NSPE, TinyMaix build directories..."
     rm -rf "${BUILD_DIR}/spe"
     rm -rf "${BUILD_DIR}/nspe"
 else
@@ -25,9 +25,9 @@ fi
 
 echo "Cleaning complete."
 
-# CMSIS-NN is now integrated directly in the secure partition
+# TinyMaix is now integrated directly in the secure partition
 echo ""
-echo "CMSIS-NN integrated directly in secure partition"
+echo "TinyMaix integrated directly in secure partition"
 echo "================================================"
 
 # Create build directories
@@ -51,7 +51,7 @@ cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
   -DTFM_NS_REG_TEST=OFF \
   -DTFM_S_REG_TEST=OFF \
   -DTFM_PARTITION_ECHO_SERVICE=ON \
-  -DTFM_PARTITION_CMSIS_NN_INFERENCE=ON
+  -DTFM_PARTITION_TINYMAIX_INFERENCE=ON
 
 echo ""
 echo "Installing SPE build artifacts..."

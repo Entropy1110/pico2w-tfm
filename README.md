@@ -1,4 +1,4 @@
-# Pico W (RP2350) TF-M Project - TFLM TEST
+# Pico W (RP2350) TF-M Project - TinyMaix Integration
 
 
 ## How to Build and Test
