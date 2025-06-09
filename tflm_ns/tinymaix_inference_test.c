@@ -6,53 +6,6 @@
 #include "tfm_tinymaix_inference_defs.h"
 #include "psa/client.h"
 
-/* Test model data - Minimal valid TinyMaix model header for MNIST */
-/* This matches the expected format from the tinymaix_inference.c service */
-static const uint8_t test_tinymaix_model[] = {
-    /* TinyMaix magic number "MAIX" */
-    0x58, 0x49, 0x41, 0x4D,  /* "XIAM" in little endian = "MAIX" */
-    /* Model type: INT8 */
-    0x00,
-    /* Output dequantization flag */
-    0x01,
-    /* Input count */
-    0x01, 0x00,
-    /* Output count */
-    0x01, 0x00,
-    /* Layer count */
-    0x01, 0x00,
-    /* Buffer size */
-    0x00, 0x08, 0x00, 0x00,  /* Reduced buffer size: 2048 bytes */
-    /* Sub buffer size */
-    0x00, 0x04, 0x00, 0x00,  /* Sub buffer: 1024 bytes */
-    /* Input dimensions: [3, 28, 28, 1] (3D, 28x28, 1 channel - MNIST) */
-    0x03, 0x00, 0x1C, 0x00, 0x1C, 0x00, 0x01, 0x00,
-    /* Output dimensions: [1, 1, 1, 10] (1D, 10 classes) */
-    0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x0A, 0x00,
-    /* Reserved bytes (28 bytes) */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    /* Minimal layer body for testing */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
 /* Labels for MNIST classification (10 classes) */
 static const char* mnist_labels[] = {
     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
@@ -78,19 +31,50 @@ void test_tinymaix_basic_functionality(void)
         return;
     }
 
-    /* Test 2: Run inference */
-    /* Note: The service uses an embedded MNIST test image, so no input setting needed */
-    printf("[TinyMaix Test] 2. Running inference with embedded test image...\n");
+    /* Test 2: Run inference with built-in image */
+    printf("[TinyMaix Test] 2. Running inference with built-in test image...\n");
     status = tfm_tinymaix_run_inference(&predicted_class);
     if (status == TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Inference completed successfully\n");
+        printf("[TinyMaix Test] ✓ Built-in inference completed successfully\n");
         printf("[TinyMaix Test] ✓ Predicted digit: %d", predicted_class);
         if (predicted_class >= 0 && predicted_class <= 9) {
             printf(" (%s)", mnist_labels[predicted_class]);
         }
         printf("\n");
     } else {
-        printf("[TinyMaix Test] ✗ Inference failed: %d\n", status);
+        printf("[TinyMaix Test] ✗ Built-in inference failed: %d\n", status);
+        return;
+    }
+
+    /* Test 3: Run inference with custom image data */
+    printf("[TinyMaix Test] 3. Running inference with custom image data...\n");
+    
+    /* Create a different test image (digit "7") */
+    uint8_t custom_image[28*28];
+    memset(custom_image, 0, sizeof(custom_image));
+
+    /* Draw a simple "7" pattern */
+    for (int y = 0; y < 28; y++) {
+        for (int x = 0; x < 28; x++) {
+            if ((y == 0 && x >= 10 && x <= 17) || /* Top horizontal line */
+                (y == 1 && x == 17) ||           /* Vertical line */
+                (y >= 2 && y <= 6 && x == 17) || /* Vertical line */
+                (y == 7 && x >= 10 && x <= 17)) { /* Bottom horizontal line */
+                custom_image[y * 28 + x] = 255; /* White pixel */
+            }
+        }
+    }
+    
+    status = tfm_tinymaix_run_inference_with_data(custom_image, sizeof(custom_image), &predicted_class);
+    if (status == TINYMAIX_STATUS_SUCCESS) {
+        printf("[TinyMaix Test] ✓ Custom inference completed successfully\n");
+        printf("[TinyMaix Test] ✓ Predicted digit: %d", predicted_class);
+        if (predicted_class >= 0 && predicted_class <= 9) {
+            printf(" (%s)", mnist_labels[predicted_class]);
+        }
+        printf("\n");
+    } else {
+        printf("[TinyMaix Test] ✗ Custom inference failed: %d\n", status);
         return;
     }
 
@@ -121,8 +105,25 @@ void test_tinymaix_performance(void)
     for (int i = 0; i < num_iterations; i++) {
         printf("[TinyMaix Test] Iteration %d/%d...", i + 1, num_iterations);
         
-        /* Run inference */
-        status = tfm_tinymaix_run_inference(&predicted_class);
+        /* Alternate between built-in and custom inference */
+        if (i % 2 == 0) {
+            /* Use built-in image */
+            status = tfm_tinymaix_run_inference(&predicted_class);
+        } else {
+            /* Use custom zero image */
+            uint8_t zero_image[28*28];
+            memset(zero_image, 0, sizeof(zero_image));
+            for (int y = 8; y < 20; y++) {
+                for (int x = 10; x < 18; x++) {
+                    int idx = y * 28 + x;
+                    if ((y == 8 || y == 19) || (x == 10 || x == 17)) {
+                        zero_image[idx] = 200;
+                    }
+                }
+            }
+            status = tfm_tinymaix_run_inference_with_data(zero_image, sizeof(zero_image), &predicted_class);
+        }
+        
         if (status != TINYMAIX_STATUS_SUCCESS) {
             printf(" ✗ FAILED (status: %d)\n", status);
             return;

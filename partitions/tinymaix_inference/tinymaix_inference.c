@@ -32,7 +32,7 @@ static int g_model_loaded = 0;
 static uint8_t static_main_buf[MDL_BUF_LEN];  // Use size from mnist_valid_q.h
 static uint8_t static_sub_buf[512];           // Small sub buffer
 
-/* MNIST test image from the example (28x28 pixels) */
+/* MNIST test image - Using original MNIST example (digit "3") */
 static uint8_t mnist_pic[28*28]={
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -169,37 +169,82 @@ void tinymaix_inference_entry(void)
                 if (!g_model_loaded) {
                     status = PSA_ERROR_BAD_STATE;
                 } else {
-                    /* Prepare input data - exactly like MNIST example */
-                    g_in_uint8.dims = 3;
-                    g_in_uint8.h = 28;
-                    g_in_uint8.w = 28; 
-                    g_in_uint8.c = 1;
-                    g_in_uint8.data = (mtype_t*)mnist_pic;
-                    
-                    /* Preprocess input - exactly like MNIST example */
-                    #if (TM_MDL_TYPE == TM_MDL_INT8) || (TM_MDL_TYPE == TM_MDL_INT16) 
-                        tm_res = tm_preprocess(&g_mdl, TMPP_UINT2INT, &g_in_uint8, &g_in); 
-                    #else
-                        tm_res = tm_preprocess(&g_mdl, TMPP_UINT2FP01, &g_in_uint8, &g_in); 
-                    #endif
-                    
-                    if (tm_res != TM_OK) {
-                        status = PSA_ERROR_GENERIC_ERROR;
-                    } else {
-                        /* Run inference - exactly like MNIST example */
-                        tm_res = tm_run(&g_mdl, &g_in, g_outs);
+                    /* Check if input data provided */
+                    if (msg.in_size[0] == 28*28) {
+                        /* Read custom input image data (28x28 = 784 bytes) */
+                        bytes_read = psa_read(msg.handle, 0, mnist_pic, msg.in_size[0]);
+                        if (bytes_read != msg.in_size[0]) {
+                            status = PSA_ERROR_COMMUNICATION_FAILURE;
+                        } else {
+                            /* Prepare input data with custom image */
+                            g_in_uint8.dims = 3;
+                            g_in_uint8.h = 28;
+                            g_in_uint8.w = 28; 
+                            g_in_uint8.c = 1;
+                            g_in_uint8.data = (mtype_t*)mnist_pic;
+                            
+                            /* Preprocess input */
+                            #if (TM_MDL_TYPE == TM_MDL_INT8) || (TM_MDL_TYPE == TM_MDL_INT16) 
+                                tm_res = tm_preprocess(&g_mdl, TMPP_UINT2INT, &g_in_uint8, &g_in); 
+                            #else
+                                tm_res = tm_preprocess(&g_mdl, TMPP_UINT2FP01, &g_in_uint8, &g_in); 
+                            #endif
+                            
+                            if (tm_res != TM_OK) {
+                                status = PSA_ERROR_GENERIC_ERROR;
+                            } else {
+                                /* Run inference */
+                                tm_res = tm_run(&g_mdl, &g_in, g_outs);
+                                if (tm_res != TM_OK) {
+                                    status = PSA_ERROR_GENERIC_ERROR;
+                                } else {
+                                    /* Parse output */
+                                    result = parse_output(g_outs);
+                                    status = PSA_SUCCESS;
+                                    
+                                    /* Write result if there's output space */
+                                    if (msg.out_size[0] >= sizeof(int)) {
+                                        psa_write(msg.handle, 0, &result, sizeof(result));
+                                    }
+                                }
+                            }
+                        }
+                    } else if (msg.in_size[0] == 0) {
+                        /* Use built-in test image */
+                        g_in_uint8.dims = 3;
+                        g_in_uint8.h = 28;
+                        g_in_uint8.w = 28; 
+                        g_in_uint8.c = 1;
+                        g_in_uint8.data = (mtype_t*)mnist_pic;
+                        
+                        /* Preprocess input */
+                        #if (TM_MDL_TYPE == TM_MDL_INT8) || (TM_MDL_TYPE == TM_MDL_INT16) 
+                            tm_res = tm_preprocess(&g_mdl, TMPP_UINT2INT, &g_in_uint8, &g_in); 
+                        #else
+                            tm_res = tm_preprocess(&g_mdl, TMPP_UINT2FP01, &g_in_uint8, &g_in); 
+                        #endif
+                        
                         if (tm_res != TM_OK) {
                             status = PSA_ERROR_GENERIC_ERROR;
                         } else {
-                            /* Parse output - exactly like MNIST example */
-                            result = parse_output(g_outs);
-                            status = PSA_SUCCESS;
-                            
-                            /* Write result if there's output space */
-                            if (msg.out_size[0] >= sizeof(int)) {
-                                psa_write(msg.handle, 0, &result, sizeof(result));
+                            /* Run inference */
+                            tm_res = tm_run(&g_mdl, &g_in, g_outs);
+                            if (tm_res != TM_OK) {
+                                status = PSA_ERROR_GENERIC_ERROR;
+                            } else {
+                                /* Parse output */
+                                result = parse_output(g_outs);
+                                status = PSA_SUCCESS;
+                                
+                                /* Write result if there's output space */
+                                if (msg.out_size[0] >= sizeof(int)) {
+                                    psa_write(msg.handle, 0, &result, sizeof(result));
+                                }
                             }
                         }
+                    } else {
+                        /* Invalid input size */
+                        status = PSA_ERROR_INVALID_ARGUMENT;
                     }
                 }
                 

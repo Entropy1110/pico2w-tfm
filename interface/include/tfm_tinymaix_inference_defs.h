@@ -27,6 +27,7 @@ typedef enum {
 /* TinyMaix API function declarations - simplified */
 tfm_tinymaix_status_t tfm_tinymaix_load_model(const uint8_t* model_data, size_t model_size);
 tfm_tinymaix_status_t tfm_tinymaix_run_inference(int* predicted_class);
+tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(const uint8_t* image_data, size_t image_size, int* predicted_class);
 
 #ifdef __cplusplus
 }

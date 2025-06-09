@@ -39,11 +39,21 @@ tfm_tinymaix_status_t tfm_tinymaix_load_model(const uint8_t* model_data, size_t 
 
 tfm_tinymaix_status_t tfm_tinymaix_run_inference(int* predicted_class)
 {
+    return tfm_tinymaix_run_inference_with_data(NULL, 0, predicted_class);
+}
+
+tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(const uint8_t* image_data, size_t image_size, int* predicted_class)
+{
     psa_status_t status;
     psa_handle_t handle;
     int result = -1;
     
     if (!predicted_class) {
+        return TINYMAIX_STATUS_ERROR_INVALID_PARAM;
+    }
+    
+    /* Validate image data if provided */
+    if (image_data && image_size != 28*28) {
         return TINYMAIX_STATUS_ERROR_INVALID_PARAM;
     }
     
@@ -57,7 +67,16 @@ tfm_tinymaix_status_t tfm_tinymaix_run_inference(int* predicted_class)
         {.base = &result, .len = sizeof(result)}
     };
     
-    status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, NULL, 0, out_vec, 1);
+    if (image_data && image_size > 0) {
+        /* Use custom image data */
+        psa_invec in_vec[] = {
+            {.base = image_data, .len = image_size}
+        };
+        status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, in_vec, 1, out_vec, 1);
+    } else {
+        /* Use built-in test image */
+        status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, NULL, 0, out_vec, 1);
+    }
     
     psa_close(handle);
     
