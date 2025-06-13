@@ -35,11 +35,6 @@ void test_psa_encryption(void);
 void test_psa_hash(void);
 
 /**
- * \brief Test TinyMaix inference functionality (basic test)
- */
-void test_tinymaix_inference(void);
-
-/**
  * \brief Test TinyMaix performance
  */
 void test_tinymaix_performance(void);

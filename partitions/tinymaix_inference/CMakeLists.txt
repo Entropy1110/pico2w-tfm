@@ -19,6 +19,8 @@ target_sources(tfm_app_rot_partition_tinymaix_inference
         # TinyMaix core source files (internal copy)
         tinymaix/src/tm_model.c
         tinymaix/src/tm_layers.c
+        # PSA-friendly encrypted model data (CBC mode)
+        ../../models/encrypted_mnist_model_psa.c
 )
 
 # The generated sources
@@ -39,6 +41,7 @@ target_include_directories(tfm_app_rot_partition_tinymaix_inference
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/tinymaix_inference
         ${CMAKE_SOURCE_DIR}/../../interface/include
         tinymaix/include
+        ../../models
 )
 
 target_include_directories(tfm_partitions
@@ -51,6 +54,7 @@ target_link_libraries(tfm_app_rot_partition_tinymaix_inference
         platform_s
         tfm_sprt
         tfm_log_unpriv
+        psa_crypto_config
 )
 
 target_link_libraries(tfm_partitions

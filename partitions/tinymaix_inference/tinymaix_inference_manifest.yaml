@@ -11,7 +11,7 @@
   "type": "APPLICATION-ROT",
   "priority": "NORMAL",
   "entry_point": "tinymaix_inference_entry",
-  "stack_size": "0x3000",
+  "stack_size": "0x10000",
   "model": "IPC",
   "services": [
     {
@@ -23,5 +23,8 @@
       "version": 1,
       "version_policy": "STRICT"
     }
+  ],
+  "dependencies": [
+    "TFM_CRYPTO"
   ]
 }

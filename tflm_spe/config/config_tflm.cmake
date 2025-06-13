@@ -31,15 +31,8 @@ set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL      "Enable Plat
 set(TFM_PARTITION_ECHO_SERVICE           ON          CACHE BOOL      "Enable Echo Service partition")
 set(TFM_PARTITION_TINYMAIX_INFERENCE    ON          CACHE BOOL      "Enable TinyMaix Inference partition")
 
-# Enable only essential crypto modules for PSA encryption
-set(CRYPTO_KEY_MODULE_ENABLED           ON          CACHE BOOL      "Enable key module for PSA")
-set(CRYPTO_CIPHER_MODULE_ENABLED        OFF         CACHE BOOL      "Disable cipher module to avoid config errors")
-set(CRYPTO_HASH_MODULE_ENABLED          ON          CACHE BOOL      "Enable hash module for PSA")
-set(CRYPTO_MAC_MODULE_ENABLED           OFF         CACHE BOOL      "Disable MAC module to reduce complexity")
-set(CRYPTO_AEAD_MODULE_ENABLED          ON          CACHE BOOL      "Enable AEAD module for authenticated encryption")
-set(CRYPTO_ASYM_SIGN_MODULE_ENABLED     OFF         CACHE BOOL      "Disable asymmetric signing to reduce complexity")
-set(CRYPTO_ASYM_ENCRYPT_MODULE_ENABLED  OFF         CACHE BOOL      "Disable asymmetric encryption to reduce complexity")
-set(CRYPTO_KEY_DERIVATION_MODULE_ENABLED OFF        CACHE BOOL      "Disable key derivation to reduce complexity")
+# Crypto modules will be automatically enabled based on TFM_CRYPTO dependency in manifest
+# No need to manually configure them
 
 # Echo service is now out-of-tree
 set(TFM_EXTRA_MANIFEST_LIST_FILES       "${CMAKE_SOURCE_DIR}/../partitions/manifest_list.yaml" CACHE STRING "Out-of-tree partition manifest list")
@@ -58,7 +51,11 @@ set(TFM_S_REG_TEST                      OFF         CACHE BOOL      "Enable S re
 
 ################################## Dependencies ############################
 
-set(TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/mbedtls_extra_config.h CACHE PATH "Config to append to standard Mbed Crypto config, used by platforms to cnfigure feature support")
+# Use TF-M's default client config and our service config
+set(TFM_MBEDCRYPTO_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/mbedtls_config.h CACHE PATH "Service side mbedtls config")
+# set(TFM_MBEDCRYPTO_CONFIG_CLIENT_PATH ${CONFIG_TFM_SOURCE_PATH}/lib/ext/mbedcrypto/mbedcrypto_config/tfm_mbedcrypto_config_client.h CACHE PATH "Client side mbedtls config") 
+# set(TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/mbedtls_extra_config.h CACHE PATH "Extra config for MbedTLS")
+set(TFM_MBEDCRYPTO_PSA_CRYPTO_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/config_tflm.h CACHE PATH "PSA crypto configuration file")
 
 ################################## Compiler options #########################
 

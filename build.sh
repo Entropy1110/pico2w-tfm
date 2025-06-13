@@ -36,6 +36,13 @@ mkdir -p "${BUILD_DIR}/nspe"
 
 cd "${PROJECT_ROOT}"
 
+
+echo ""
+echo "TinyMaix Model encryption using Test Key..."
+echo "==========================================="
+python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --key-file models/model_key_psa.bin --generate-c-header
+
+
 echo ""
 echo "Building SPE (Secure Processing Environment)..."
 echo "==============================================="

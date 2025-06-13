@@ -1,7 +1,7 @@
 #include "psa/client.h"
 #include "tfm_tinymaix_inference_defs.h"
 
-tfm_tinymaix_status_t tfm_tinymaix_load_model(const uint8_t* model_data, size_t model_size)
+tfm_tinymaix_status_t tfm_tinymaix_load_encrypted_model()
 {
     psa_status_t status;
     psa_handle_t handle;
@@ -17,16 +17,8 @@ tfm_tinymaix_status_t tfm_tinymaix_load_model(const uint8_t* model_data, size_t 
         {.base = &result, .len = sizeof(result)}
     };
     
-    if (model_data == NULL || model_size == 0) {
-        /* Use built-in model - no input data */
-        status = psa_call(handle, TINYMAIX_IPC_LOAD_MODEL, NULL, 0, out_vec, 1);
-    } else {
-        /* Use custom model data */
-        psa_invec in_vec[] = {
-            {.base = model_data, .len = model_size}
-        };
-        status = psa_call(handle, TINYMAIX_IPC_LOAD_MODEL, in_vec, 1, out_vec, 1);
-    }
+    /* Use builtin encrypted model - no input data needed */
+    status = psa_call(handle, TINYMAIX_IPC_LOAD_ENCRYPTED_MODEL, NULL, 0, out_vec, 1);
     
     psa_close(handle);
     
@@ -52,11 +44,6 @@ tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(const uint8_t* image_
         return TINYMAIX_STATUS_ERROR_INVALID_PARAM;
     }
     
-    /* Validate image data if provided */
-    if (image_data && image_size != 28*28) {
-        return TINYMAIX_STATUS_ERROR_INVALID_PARAM;
-    }
-    
     /* Connect to service */
     handle = psa_connect(TFM_TINYMAIX_INFERENCE_SID, 1);
     if (handle <= 0) {
@@ -67,16 +54,8 @@ tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(const uint8_t* image_
         {.base = &result, .len = sizeof(result)}
     };
     
-    if (image_data && image_size > 0) {
-        /* Use custom image data */
-        psa_invec in_vec[] = {
-            {.base = image_data, .len = image_size}
-        };
-        status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, in_vec, 1, out_vec, 1);
-    } else {
-        /* Use built-in test image */
-        status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, NULL, 0, out_vec, 1);
-    }
+    /* Always use built-in test image - ignore input parameters */
+    status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE, NULL, 0, out_vec, 1);
     
     psa_close(handle);
     

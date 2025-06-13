@@ -179,9 +179,9 @@ target_sources(tfm_tflm_broker
         ../tflm_ns/psa_crypto_test.c
         ../tflm_ns/test_runner.c
         ../tflm_ns/tinymaix_inference_test.c
-        ../models/simple_xor_model.c
         ../interface/src/tfm_echo_api.c
         ../interface/src/tfm_tinymaix_inference_api.c
+        ../models/encrypted_mnist_model_psa.c
 )
 
 target_include_directories(tfm_tflm_broker
