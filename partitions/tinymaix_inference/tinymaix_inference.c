@@ -338,6 +338,8 @@ void tinymaix_inference_entry(void)
                     /* Load decrypted model into TinyMaix */
                     INFO_UNPRIV("=== LOADING DECRYPTED MODEL INTO TINYMAIX ===\n");
                     INFO_UNPRIV("Decrypted model size: %d bytes\n", g_decrypted_size);
+                    INFO_UNPRIV("Model buffer ptr: %p\n", g_decrypted_model);
+                    INFO_UNPRIV("Static main buf ptr: %p, size: %d\n", static_main_buf, MDL_BUF_LEN);
                     INFO_UNPRIV("Calling tm_load...\n");
                     
                     tm_res = tm_load(&g_mdl, g_decrypted_model, static_main_buf, layer_cb, &g_in);
@@ -463,6 +465,11 @@ void tinymaix_inference_entry(void)
                                 result = parse_output(g_outs);
                                 INFO_UNPRIV("Built-in predicted class: %d\n", result);
                                 status = PSA_SUCCESS;
+                                
+                                /* Write result if there's output space */
+                                if (msg.out_size[0] >= sizeof(int)) {
+                                    psa_write(msg.handle, 0, &result, sizeof(result));
+                                }
                             }
                         }
                     } else {
