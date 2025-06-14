@@ -26,23 +26,55 @@
 git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm-tflm
 ```
 
-#### 1. 빌드 실행 (캐시 포함)
+#### 1. 개발 모드 빌드 (DEV_MODE) - HUK 키 추출
 
 ```bash
-./build.sh
+# 첫 번째 단계: DEV_MODE로 빌드하여 HUK 파생 키 추출
+./build.sh DEV_MODE
+
+# 시리얼 출력에서 "HUK-derived key:" 줄을 찾아 16진수 키를 복사
+# 예: HUK-derived key: 40c962d66a1fa40346cac8b7e612741e
+
+# 추출한 키를 바이너리 파일로 저장 (16진수 → 바이너리 변환)
+echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
+
+# 또는 사용자 정의 이름으로 저장
+echo "YOUR_HUK_KEY_HERE" | xxd -r -p > models/my_device_key.bin
+
+#### 2. HUK 키를 사용한 모델 암호화
+
+DEV_MODE에서 추출한 HUK 파생 키를 사용하여 모델을 암호화합니다:
+
+```bash
+# 추출한 HUK 키로 모델 암호화 (권장 방법)
+python3 tools/tinymaix_model_encryptor.py \
+    --input models/mnist_valid_q.h \
+    --output models/encrypted_mnist_model_psa.bin \
+    --key-file models/model_key_psa.bin \
+    --generate-c-header
+
+# 사용자 정의 키 파일 사용
+python3 tools/tinymaix_model_encryptor.py \
+    --input models/mnist_valid_q.h \
+    --output models/encrypted_mnist_model_psa.bin \
+    --key-file models/my_device_key.bin \
+    --generate-c-header
 ```
 
-#### 2. 클린 빌드
+**중요**: 각 디바이스마다 고유한 HUK 키가 생성됩니다. 디바이스를 변경하면 새로운 HUK 키를 추출해야 합니다.
+
+#### 3. 클린 빌드
 
 ```bash
 ./build.sh clean
 ```
 
-#### 3. 개발 모드 빌드 (DEV_MODE)
+#### 4. 빌드 실행 (캐시 포함)
 
 ```bash
-./build.sh DEV_MODE
+./build.sh
 ```
+
 
 개발 모드에서는 다음 디버그 기능이 활성화됩니다:
 - **HUK 파생 키 출력**: `tfm_tinymaix_get_model_key()` 함수를 통해 HUK에서 파생된 모델 암호화 키를 출력
@@ -216,11 +248,35 @@ Development mode enables the following debug features:
 #### Model Encryption
 Models are encrypted using AES-128-CBC for secure deployment. The `./build.sh` script automatically encrypts models using HUK (Hardware Unique Key) derived keys.
 
+#### HUK Key Extraction and Model Encryption Workflow
+
+First, extract HUK-derived keys in DEV_MODE, then use them for model encryption:
+
+```bash
+# Step 1: Build in DEV_MODE to extract HUK-derived keys
+./build.sh DEV_MODE
+
+# Step 2: Find "HUK-derived key:" in serial output and copy the hex key
+# Example: HUK-derived key: 40c962d66a1fa40346cac8b7e612741e
+
+# Step 3: Convert hex to binary using xxd
+echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
+
+# Or save with custom name
+echo "YOUR_HUK_KEY_HERE" | xxd -r -p > models/my_device_key.bin
+
+# Step 4: Encrypt model using extracted HUK key (recommended)
+python3 tools/tinymaix_model_encryptor.py \
+    --input models/mnist_valid_q.h \
+    --output models/encrypted_mnist_model_psa.bin \
+    --key-file models/model_key_psa.bin \
+    --generate-c-header
+```
+
+**Important**: Each device generates unique HUK keys. If you change devices, you must extract new HUK keys.
+
 **Manual encryption methods:**
 ```bash
-# Use HUK-derived key (recommended, same as TF-M Secure Partition)
-python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --use-huk-key --generate-c-header
-
 # Use existing key file
 python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --key-file models/model_key_psa.bin --generate-c-header
 
