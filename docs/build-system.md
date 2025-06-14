@@ -410,6 +410,168 @@ test -f build/nspe/bin/tfm_ns.bin || exit 1
 echo "Build validation passed"
 ```
 
+## Advanced Build Features
+
+### Conditional Compilation
+```cmake
+# Feature-specific conditional build
+if(ENABLE_ADVANCED_CRYPTO)
+    target_compile_definitions(my_target PRIVATE ADVANCED_CRYPTO_ENABLED)
+    target_sources(my_target PRIVATE advanced_crypto.c)
+endif()
+
+# Platform-specific code
+if(TFM_PLATFORM STREQUAL "rpi/rp2350")
+    target_sources(my_target PRIVATE rp2350_specific.c)
+endif()
+```
+
+### Custom Build Targets
+```cmake
+# Define custom target
+add_custom_target(generate_keys
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/generate_keys.py
+    COMMENT "Generating cryptographic keys"
+)
+
+# Add dependency
+add_dependencies(my_partition generate_keys)
+
+# Post-install processing
+install(CODE "
+    message(STATUS \"Generating UF2 files...\")
+    execute_process(
+        COMMAND ${CMAKE_SOURCE_DIR}/pico_uf2.sh ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+")
+```
+
+### Build Time Validation
+```cmake
+# Compile-time checks
+add_custom_command(
+    TARGET my_target PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "Checking model encryption..."
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/verify_model.py
+    COMMENT "Verifying encrypted model integrity"
+)
+
+# Post-link validation
+add_custom_command(
+    TARGET my_target POST_BUILD
+    COMMAND arm-none-eabi-objdump -h $<TARGET_FILE:my_target>
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/check_memory_usage.py $<TARGET_FILE:my_target>
+    COMMENT "Analyzing memory usage"
+)
+```
+
+## Build Performance Optimization
+
+### Compiler Cache
+```bash
+# Use ccache (if available)
+export CC="ccache arm-none-eabi-gcc"
+export CXX="ccache arm-none-eabi-g++"
+
+# Check cache statistics
+ccache -s
+```
+
+### Parallel Build Optimization
+```cmake
+# Set number of parallel jobs in CMake
+set(CMAKE_BUILD_PARALLEL_LEVEL 8)
+
+# Limit memory usage during linking
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-keep-memory")
+```
+
+### Build Time Profiling
+```bash
+# Measure build time
+time ./build.sh
+
+# Detailed timing information
+cmake --build build/spe --verbose -- --time
+
+# Per-compilation unit timing
+CMAKE_VERBOSE_MAKEFILE=ON cmake --build build/spe
+```
+
+## Deployment Automation
+
+### Automated Device Deployment
+```bash
+#!/bin/bash
+# auto_deploy.sh
+
+# Detect device
+if picotool info >/dev/null 2>&1; then
+    echo "Pico device detected"
+    
+    # Auto-deploy
+    picotool erase
+    picotool load build/spe/bin/bl2.uf2
+    picotool load build/spe/bin/tfm_s_ns_signed.uf2
+    picotool reboot
+    
+    echo "Deployment complete"
+else
+    echo "Pico device not found"
+    echo "Connect in BOOTSEL mode"
+fi
+```
+
+### Release Packaging
+```cmake
+# Release packaging using CPack
+include(CPack)
+
+set(CPACK_PACKAGE_NAME "pico2w-tfm-tflm")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_DESCRIPTION "TinyMaix TF-M Integration for Pico 2W")
+
+# Include UF2 files
+install(FILES 
+    ${CMAKE_BINARY_DIR}/build/spe/bin/bl2.uf2
+    ${CMAKE_BINARY_DIR}/build/spe/bin/tfm_s_ns_signed.uf2
+    DESTINATION firmware
+)
+
+# Include documentation
+install(DIRECTORY docs/ DESTINATION docs)
+install(FILES README.md DESTINATION .)
+```
+
+## Environment-Specific Build Configurations
+
+### Development Environment
+```bash
+# Quick build for developers
+export DEV_BUILD=1
+export SKIP_TESTS=1
+./build.sh DEV_MODE
+```
+
+### CI/CD Environment
+```bash
+# Strict build for CI
+export STRICT_BUILD=1
+export ENABLE_ALL_WARNINGS=1
+export TREAT_WARNINGS_AS_ERRORS=1
+./build.sh
+```
+
+### Production Environment
+```bash
+# Production release build
+export PRODUCTION_BUILD=1
+export OPTIMIZE_SIZE=1
+export STRIP_DEBUG=1
+./build.sh
+```
+
 ## Next Steps
 
 - **[TF-M Architecture](./tfm-architecture.md)**: Understand the overall system

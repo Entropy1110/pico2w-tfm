@@ -1,635 +1,191 @@
-# Testing Framework Guide
+# TF-M Testing Framework Guide
+
+This document provides a guide to the TF-M (Trusted Firmware-M) testing framework, focusing on how to build, run, and analyze tests for secure applications on the Pico2W platform.
 
 ## Overview
 
-The testing framework provides comprehensive validation for TF-M secure partitions, PSA API functionality, and TinyMaix neural network inference. Tests run automatically on device boot and provide detailed feedback via UART/USB serial.
+The TF-M testing framework is crucial for verifying the correctness and security of PSA (Platform Security Architecture) services and secure partitions. It encompasses various test suites, build configurations, and execution methods.
 
-## Test Architecture
+## Test Types and Structure
 
-### Test Organization
+TF-M employs several types of tests:
+
+*   **PSA API Tests**: Validate compliance with PSA APIs (Crypto, Storage, Attestation, etc.).
+*   **Secure Partition Tests**: Test the functionality of individual secure partitions.
+*   **Regression Tests**: Ensure that new changes do not break existing functionality.
+*   **IPC (Inter-Process Communication) Tests**: Verify communication mechanisms between secure and non-secure worlds, and between partitions.
+
+### Test Suite Structure
 ```
-tflm_ns/
-├── test_runner.c              # Main test orchestrator
-├── echo_test_app.c            # Echo service tests
-├── psa_crypto_test.c          # PSA crypto API tests  
-├── tinymaix_inference_test.c  # TinyMaix ML tests
-└── app.h                      # Test declarations
-```
-
-### Test Execution Flow
-```
-Device Boot → RTOS Start → Test Runner → Individual Tests → Serial Output
-```
-
-## Test Runner
-
-### Main Test Controller: `test_runner.c`
-
-#### DEV_MODE vs Production Testing
-```c
-void run_all_tests(void* arg)
-{
-    UNUSED_VARIABLE(arg);
-    
-#ifdef DEV_MODE
-    LOG_MSG("Starting TF-M Test Suite (DEV_MODE)...\r\n");
-    LOG_MSG("DEV_MODE: Only HUK-derived model key test will run\r\n");
-    
-    /* DEV_MODE: Only run HUK key derivation test */
-    test_tinymaix_comprehensive_suite();
-    
-    LOG_MSG("DEV_MODE tests completed!\r\n");
-#else
-    LOG_MSG("Starting TF-M Test Suite (Production Mode)...\r\n");
-    
-    /* Production Mode: Run all tests except DEV_MODE specific ones */
-    test_echo_service();
-    test_psa_encryption(); 
-    test_psa_hash();
-    test_tinymaix_comprehensive_suite();
-    
-    LOG_MSG("All production tests completed!\r\n");
-#endif
-}
+tf-m-tests/
+├── test
+│   ├── framework                   # Core test framework components
+│   ├── psa_api_tests               # PSA API compliance tests
+│   ├── secure_fw                   # Secure firmware specific tests
+│   │   ├── core_test               # Core TF-M functionality tests
+│   │   ├── initial_attestation     # Attestation service tests
+│   │   ├── internal_trusted_storage # ITS tests
+│   │   ├── protected_storage       # PS tests
+│   │   └── ...
+│   ├── spe_test_app                # Secure Processing Environment test application
+│   └── ...
+├── CMakeLists.txt                  # Main CMake file for tests
+└── ...
 ```
 
-### RTOS Integration
-Tests run in RTOS context with proper task management:
-```c
-/* In main_ns.c */
-osThreadNew(run_all_tests, NULL, &app_task_attr);
+## Building Tests
+
+Tests are built as part of the TF-M build process. Specific test configurations can be enabled or disabled via CMake options.
+
+### Key CMake Options for Testing
+
+*   `TFM_TEST_PSA_API_CRYPTO`: Enable PSA Crypto API tests.
+*   `TFM_TEST_PSA_API_STORAGE`: Enable PSA Storage (ITS/PS) API tests.
+*   `TFM_TEST_PSA_API_ATTESTATION`: Enable PSA Attestation API tests.
+*   `TFM_REGRESSION_TEST`: Enable regression tests.
+*   `TFM_PARTITION_TEST_CORE`: Enable core TF-M tests.
+*   `TFM_PARTITION_TEST_SECURE_SERVICES`: Enable tests for various secure services.
+
+### Example Build Command with Tests Enabled
+
+```bash
+# Assumes you are in the build directory
+cmake -S /path/to/tf-m-source -B . \
+      -DTFM_PLATFORM=trustedfirmware/pico2w \
+      -DTFM_TOOLCHAIN=GNUARM \
+      -DTFM_PROFILE=profile_medium \
+      -DTFM_ISOLATION_LEVEL=1 \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DTFM_REGRESSION_TEST=ON \
+      -DTFM_TEST_PSA_API_CRYPTO=ON \
+      -DTFM_TEST_PSA_API_STORAGE=ON \
+      -DTFM_TEST_PSA_API_ATTESTATION=ON
+make -j$(nproc)
+```
+This command configures the build for the Pico2W platform with `profile_medium`, isolation level 1, and enables regression tests along with specific PSA API tests.
+
+## Running Tests
+
+After building, the test firmware image (`tfm_s_ns_signed.bin` or similar) needs to be flashed onto the Pico2W.
+
+### Flashing the Test Firmware
+
+Use the `pico_uf2.sh` script or a debugger (e.g., Picoprobe with OpenOCD) to flash the image.
+
+```bash
+# Using pico_uf2.sh (assuming Pico2W is in BOOTSEL mode)
+./pico_uf2.sh build/spe/tfm_s_ns_signed.bin
 ```
 
-## Test Categories
+### Test Execution and Output
 
-### 1. Echo Service Tests
+Tests typically run automatically after the device boots. Test results are outputted via the serial console (UART). Connect a serial terminal (e.g., minicom, PuTTY, VS Code Serial Monitor) to the Pico2W's UART pins to observe the output.
 
-#### Basic Echo Functionality
-```c
-void test_echo_service(void)
-{
-    printf("[Echo Test] Testing Echo Service...\n");
-    
-    tfm_echo_status_t status;
-    const char* test_string = "Hello, Secure World!";
-    char output_buffer[256];
-    
-    /* Test basic echo */
-    status = tfm_echo_call((uint8_t*)test_string, strlen(test_string),
-                          (uint8_t*)output_buffer, sizeof(output_buffer));
-    
-    if (status == ECHO_STATUS_SUCCESS) {
-        printf("[Echo Test] ✓ Echo successful: %s\n", output_buffer);
-    } else {
-        printf("[Echo Test] ✗ Echo failed: %d\n", status);
-    }
-}
+**Default UART Configuration for Pico2W:**
+*   Baud Rate: 115200
+*   Data Bits: 8
+*   Parity: None
+*   Stop Bits: 1
+
+### Example Test Output Snippet
+```
+[INF] Starting TFM_REGRESSION_TEST_CORE...
+[Sec Thread] Regression test suite started
+[Sec Thread] Running Test Case: CORE_TEST_POSITIVE
+[Sec Thread] Test Case: CORE_TEST_POSITIVE PASSED
+[Sec Thread] Running Test Case: CORE_TEST_NEGATIVE_INVALID_PARAM
+[Sec Thread] Test Case: CORE_TEST_NEGATIVE_INVALID_PARAM PASSED
+...
+[INF] TFM_REGRESSION_TEST_CORE: PASSED
+[INF] Starting TFM_PSA_API_TEST_CRYPTO...
+...
+[INF] TFM_PSA_API_TEST_CRYPTO: FAILED (1 test case failed)
 ```
 
-### 2. PSA Crypto Tests
+## Analyzing Test Results
 
-#### AES-128 Encryption Test
-```c
-void test_psa_encryption(void)
-{
-    printf("[PSA Crypto Test] Testing AES-128 encryption...\n");
-    
-    psa_status_t status;
-    psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_key_id_t key_id;
-    
-    /* Initialize PSA crypto */
-    status = psa_crypto_init();
-    if (status != PSA_SUCCESS && status != PSA_ERROR_ALREADY_EXISTS) {
-        printf("[PSA Crypto Test] ✗ Init failed: %d\n", status);
-        return;
-    }
-    
-    /* Generate AES-128 key */
-    psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
-    psa_set_key_algorithm(&attributes, PSA_ALG_CTR);
-    psa_set_key_type(&attributes, PSA_KEY_TYPE_AES);
-    psa_set_key_bits(&attributes, 128);
-    
-    status = psa_generate_key(&attributes, &key_id);
-    if (status == PSA_SUCCESS) {
-        printf("[PSA Crypto Test] ✓ AES-128 key generated\n");
-        
-        /* Test encryption/decryption */
-        test_aes_encrypt_decrypt(key_id);
-        
-        /* Cleanup */
-        psa_destroy_key(key_id);
-    } else {
-        printf("[PSA Crypto Test] ✗ Key generation failed: %d\n", status);
-    }
-}
-```
+Test results indicate `PASSED` or `FAILED` for each test suite and individual test case.
 
-#### SHA-256 Hash Test
-```c
-void test_psa_hash(void)
-{
-    printf("[PSA Hash Test] Testing SHA-256...\n");
-    
-    psa_status_t status;
-    const char* message = "Hello, TF-M World!";
-    uint8_t hash[PSA_HASH_LENGTH(PSA_ALG_SHA_256)];
-    size_t hash_length;
-    
-    /* Compute SHA-256 hash */
-    status = psa_hash_compute(PSA_ALG_SHA_256,
-                             (const uint8_t*)message, strlen(message),
-                             hash, sizeof(hash), &hash_length);
-    
-    if (status == PSA_SUCCESS) {
-        printf("[PSA Hash Test] ✓ SHA-256 computed (%d bytes)\n", hash_length);
-        
-        /* Print hash (first 8 bytes) */
-        printf("[PSA Hash Test] Hash: ");
-        for (int i = 0; i < 8; i++) {
-            printf("%02x", hash[i]);
-        }
-        printf("...\n");
-    } else {
-        printf("[PSA Hash Test] ✗ Hash failed: %d\n", status);
-    }
-}
-```
+*   **PASSED**: The test case or suite completed successfully.
+*   **FAILED**: One or more assertions within the test case failed. The output usually provides details about the failure.
 
-### 3. TinyMaix Inference Tests
+### Debugging Failed Tests
 
-#### Production Mode Tests
-```c
-void test_tinymaix_basic_functionality(void)
-{
-    printf("[TinyMaix Test] Testing encrypted model functionality...\n");
-    
-    tfm_tinymaix_status_t status;
-    int predicted_class = -1;
-    
-    /* Test 1: Load encrypted model */
-    printf("[TinyMaix Test] 1. Loading builtin encrypted MNIST model...\n");
-    status = tfm_tinymaix_load_encrypted_model();
-    if (status == TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Encrypted model loaded successfully\n");
-    } else {
-        printf("[TinyMaix Test] ✗ Model load failed: %d\n", status);
-        return;
-    }
-    
-    /* Test 2: Built-in image inference */
-    printf("[TinyMaix Test] 2. Running inference with built-in image...\n");
-    status = tfm_tinymaix_run_inference(&predicted_class);
-    if (status == TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Built-in inference successful\n");
-        printf("[TinyMaix Test] ✓ Predicted digit: %d\n", predicted_class);
-    } else {
-        printf("[TinyMaix Test] ✗ Built-in inference failed: %d\n", status);
-        return;
-    }
-    
-    /* Test 3: Custom image inference */
-    printf("[TinyMaix Test] 3. Running inference with custom image...\n");
-    
-    uint8_t custom_image[28*28];
-    create_test_digit_pattern(custom_image, 7); /* Create digit "7" */
-    
-    status = tfm_tinymaix_run_inference_with_data(custom_image, sizeof(custom_image), 
-                                                  &predicted_class);
-    if (status == TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Custom inference successful\n");
-        printf("[TinyMaix Test] ✓ Predicted digit: %d\n", predicted_class);
-    } else {
-        printf("[TinyMaix Test] ✗ Custom inference failed: %d\n", status);
-    }
-}
-```
-
-#### DEV_MODE Tests
-```c
-#ifdef DEV_MODE
-void test_tinymaix_get_model_key(void)
-{
-    printf("[TinyMaix Test] Testing HUK-derived model key (DEV_MODE)...\n");
-    
-    tfm_tinymaix_status_t status;
-    uint8_t key_buffer[16]; /* 128-bit key */
-    
-    /* Test 1: Get model key */
-    printf("[TinyMaix Test] 1. Getting HUK-derived model key...\n");
-    status = tfm_tinymaix_get_model_key(key_buffer, sizeof(key_buffer));
-    if (status == TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Model key retrieved successfully\n");
-        printf("[TinyMaix Test] ✓ Key (hex): ");
-        for (int i = 0; i < 16; i++) {
-            printf("%02x", key_buffer[i]);
-        }
-        printf("\n");
-    } else {
-        printf("[TinyMaix Test] ✗ Failed to get model key: %d\n", status);
-        return;
-    }
-    
-    /* Test 2: Validate key consistency */
-    printf("[TinyMaix Test] 2. Verifying key consistency...\n");
-    uint8_t key_buffer2[16];
-    status = tfm_tinymaix_get_model_key(key_buffer2, sizeof(key_buffer2));
-    if (status == TINYMAIX_STATUS_SUCCESS) {
-        int keys_match = (memcmp(key_buffer, key_buffer2, 16) == 0);
-        if (keys_match) {
-            printf("[TinyMaix Test] ✓ Key derivation is consistent\n");
-        } else {
-            printf("[TinyMaix Test] ✗ Key derivation is inconsistent\n");
-        }
-    }
-    
-    /* Test 3: Invalid parameters */
-    printf("[TinyMaix Test] 3. Testing invalid parameters...\n");
-    status = tfm_tinymaix_get_model_key(NULL, 16);
-    if (status != TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Correctly rejected NULL buffer\n");
-    }
-    
-    status = tfm_tinymaix_get_model_key(key_buffer, 8); /* Too small */
-    if (status != TINYMAIX_STATUS_SUCCESS) {
-        printf("[TinyMaix Test] ✓ Correctly rejected small buffer\n");
-    }
-}
-#endif
-```
-
-## Test Utilities
-
-### MNIST Pattern Generation
-```c
-static void create_test_digit_pattern(uint8_t* image, int digit)
-{
-    memset(image, 0, 28*28);
-    
-    switch (digit) {
-        case 0:
-            /* Draw circle pattern for "0" */
-            for (int y = 8; y < 20; y++) {
-                for (int x = 10; x < 18; x++) {
-                    if ((y == 8 || y == 19) || (x == 10 || x == 17)) {
-                        image[y * 28 + x] = 255;
-                    }
-                }
-            }
-            break;
-            
-        case 1:
-            /* Draw vertical line for "1" */
-            for (int y = 5; y < 23; y++) {
-                image[y * 28 + 14] = 255;
-            }
-            break;
-            
-        case 7:
-            /* Draw "7" pattern */
-            for (int x = 10; x < 18; x++) {
-                image[8 * 28 + x] = 255; /* Top line */
-            }
-            for (int y = 8; y < 20; y++) {
-                image[y * 28 + 17] = 255; /* Vertical line */
-            }
-            break;
-            
-        default:
-            /* Default square pattern */
-            for (int y = 10; y < 18; y++) {
-                for (int x = 10; x < 18; x++) {
-                    image[y * 28 + x] = 255;
-                }
-            }
-            break;
-    }
-}
-```
-
-### Test Result Validation
-```c
-static bool validate_inference_result(int predicted_class, int expected_class)
-{
-    if (predicted_class < 0 || predicted_class > 9) {
-        printf("[Validation] ✗ Invalid prediction: %d (out of range)\n", predicted_class);
-        return false;
-    }
-    
-    if (predicted_class == expected_class) {
-        printf("[Validation] ✓ Prediction matches expected: %d\n", predicted_class);
-        return true;
-    } else {
-        printf("[Validation] ⚠ Prediction mismatch: got %d, expected %d\n", 
-               predicted_class, expected_class);
-        return false; /* Could be acceptable for some test patterns */
-    }
-}
-```
-
-## Test Output and Logging
-
-### Serial Output Format
-Tests output structured logs via UART/USB:
-```
-[Component Test] Operation description...
-[Component Test] ✓ Success message
-[Component Test] ✗ Error message: error_code
-[Component Test] ⚠ Warning message
-```
-
-### Example Test Output
-```
-Starting TF-M Test Suite (Production Mode)...
-
-[Echo Test] ===========================================
-[Echo Test] Testing Echo Service
-[Echo Test] ===========================================
-[Echo Test] ✓ Echo successful: Hello, Secure World!
-
-[PSA Crypto Test] ===========================================
-[PSA Crypto Test] Testing PSA Crypto Operations
-[PSA Crypto Test] ===========================================
-[PSA Crypto Test] ✓ AES-128 key generated
-[PSA Crypto Test] ✓ Encryption successful (16 bytes)
-[PSA Crypto Test] ✓ Decryption successful (16 bytes)
-[PSA Crypto Test] ✓ Data integrity verified
-
-[PSA Hash Test] ===========================================
-[PSA Hash Test] Testing SHA-256
-[PSA Hash Test] ===========================================
-[PSA Hash Test] ✓ SHA-256 computed (32 bytes)
-[PSA Hash Test] Hash: 2c26b46b...
-
-[TinyMaix Test] ###########################################
-[TinyMaix Test] #     TinyMaix Encrypted Model Test Suite  #
-[TinyMaix Test] #   MNIST Classification with Encryption   #
-[TinyMaix Test] ###########################################
-
-[TinyMaix Test] 1. Loading builtin encrypted MNIST model...
-[TinyMaix Test] ✓ Encrypted model loaded successfully
-[TinyMaix Test] 2. Running inference with built-in image...
-[TinyMaix Test] ✓ Built-in inference successful
-[TinyMaix Test] ✓ Predicted digit: 2
-[TinyMaix Test] 3. Running inference with custom image...
-[TinyMaix Test] ✓ Custom inference successful
-[TinyMaix Test] ✓ Predicted digit: 7
-
-All production tests completed!
-```
+1.  **Examine Logs**: Carefully review the serial output for error messages or unexpected behavior leading up to the failure.
+2.  **Increase Log Verbosity**: TF-M often has different log levels (e.g., `TFM_LOG_LEVEL_DEBUG`). Rebuild with a higher verbosity if necessary.
+3.  **Use a Debugger**: Attach a debugger like GDB via Picoprobe. Set breakpoints in the failing test case or relevant TF-M core/service code to step through execution and inspect variables.
+4.  **Isolate the Test**: If possible, try to run the failing test in isolation or simplify the test case to pinpoint the issue.
+5.  **Check Configurations**: Ensure the build configuration, platform settings, and partition manifests are correct for the feature being tested.
 
 ## Adding New Tests
 
-### Step 1: Create Test Function
+To add new tests, you typically need to:
+
+1.  **Create Test Source Files**: Write C files containing your test logic, using the TF-M test framework APIs (e.g., `TEST_ASSERT`, `tfm_psa_test_common_init`).
+2.  **Define Test Suites and Cases**: Organize tests into suites and individual cases.
+3.  **Update CMakeLists.txt**: Add your new test source files and any necessary configurations to the relevant `CMakeLists.txt` file within the `tf-m-tests` directory.
+4.  **Register the Test Suite**: Ensure your test suite is called by the main test application.
+
+### Example Test Case Snippet (Conceptual)
 ```c
-/* In appropriate test file */
-void test_my_new_feature(void)
-{
-    printf("[My Feature Test] Testing new feature...\n");
+// in my_custom_test.c
+#include "test_framework.h"
+#include "psa/crypto.h" // Or other relevant PSA headers
+
+static void tfm_my_custom_test_case_1(struct test_result_t *ret) {
+    psa_status_t status;
+    // Test logic here
+    status = psa_crypto_init();
+    TEST_ASSERT_EQUAL(status, PSA_SUCCESS, "psa_crypto_init failed");
     
-    /* Setup */
-    setup_test_environment();
+    // ... more test steps ...
     
-    /* Test execution */
-    int result = call_feature_under_test();
-    
-    /* Validation */
-    if (result == EXPECTED_VALUE) {
-        printf("[My Feature Test] ✓ Test passed\n");
-    } else {
-        printf("[My Feature Test] ✗ Test failed: got %d, expected %d\n", 
-               result, EXPECTED_VALUE);
+    ret->val = TEST_PASSED;
+}
+
+static struct test_suite_t my_custom_test_suite = {
+    .name = "MY_CUSTOM_TEST_SUITE",
+    .test_cases_num = 1,
+    .test_cases = (struct test_case_t []){
+        {"MY_CUSTOM_TEST_CASE_1", tfm_my_custom_test_case_1, 0, 0}
     }
-    
-    /* Cleanup */
-    cleanup_test_environment();
+};
+
+void register_my_custom_test_suite(void) {
+    register_testsuite(&my_custom_test_suite);
 }
 ```
+Then, call `register_my_custom_test_suite()` from the appropriate test runner.
 
-### Step 2: Add to Test Runner
-```c
-/* In test_runner.c */
-void run_all_tests(void* arg)
-{
-    /* ... existing tests ... */
-    
-    /* Add new test */
-    test_my_new_feature();
-    
-    /* ... */
-}
-```
+## Advanced Testing Topics
 
-### Step 3: Add Declaration
-```c
-/* In app.h */
-void test_my_new_feature(void);
-```
+### Non-Secure Client Tests
 
-### Step 4: Update Build
-```cmake
-# In app_broker/CMakeLists.txt
-target_sources(tfm_tflm_broker
-    PRIVATE
-        # ... existing sources ...
-        ../tflm_ns/my_new_feature_test.c
-)
-```
+Many tests involve a Non-Secure Processing Environment (NSPE) client calling PSA services in the Secure Processing Environment (SPE). These tests verify the full PSA IPC mechanism.
 
-## Performance Testing
+### Testing with Different Isolation Levels
 
-### Timing Measurements
-```c
-void test_performance_timing(void)
-{
-    printf("[Performance Test] Measuring operation timing...\n");
-    
-    /* Get system tick before operation */
-    uint32_t start_tick = osKernelGetTickCount();
-    
-    /* Execute operation under test */
-    perform_operation();
-    
-    /* Get system tick after operation */
-    uint32_t end_tick = osKernelGetTickCount();
-    
-    /* Calculate elapsed time */
-    uint32_t elapsed_ms = end_tick - start_tick;
-    printf("[Performance Test] Operation took %d ms\n", elapsed_ms);
-    
-    /* Validate timing requirements */
-    if (elapsed_ms <= MAX_ALLOWED_TIME_MS) {
-        printf("[Performance Test] ✓ Timing requirement met\n");
-    } else {
-        printf("[Performance Test] ✗ Timing requirement exceeded\n");
-    }
-}
-```
+TF-M supports different isolation levels (1, 2, 3). Testing should ideally be performed across all configured isolation levels, as behavior can differ, especially concerning memory access and partition interactions.
 
-### Memory Usage Testing
-```c
-void test_memory_usage(void)
-{
-    printf("[Memory Test] Checking memory usage...\n");
-    
-    /* Get initial memory stats */
-    size_t initial_free = get_free_memory();
-    
-    /* Allocate resources */
-    void* resource = allocate_test_resource();
-    
-    /* Check memory consumption */
-    size_t after_alloc = get_free_memory();
-    size_t consumed = initial_free - after_alloc;
-    
-    printf("[Memory Test] Memory consumed: %d bytes\n", consumed);
-    
-    /* Free resources */
-    free_test_resource(resource);
-    
-    /* Verify cleanup */
-    size_t final_free = get_free_memory();
-    if (final_free == initial_free) {
-        printf("[Memory Test] ✓ No memory leaks detected\n");
-    } else {
-        printf("[Memory Test] ✗ Memory leak: %d bytes\n", 
-               initial_free - final_free);
-    }
-}
-```
+### Code Coverage
 
-## Error Testing
+Tools like `gcov`/`lcov` can be integrated with the build system to measure test code coverage, helping identify untested parts of the codebase. This usually requires specific compiler flags and post-processing of build artifacts.
 
-### Invalid Parameter Testing
-```c
-void test_error_handling(void)
-{
-    printf("[Error Test] Testing error handling...\n");
-    
-    /* Test NULL parameters */
-    tfm_service_status_t status = tfm_service_call(NULL, 0, NULL, 0);
-    if (status == SERVICE_ERROR_INVALID_PARAM) {
-        printf("[Error Test] ✓ NULL parameter rejected\n");
-    } else {
-        printf("[Error Test] ✗ NULL parameter not handled\n");
-    }
-    
-    /* Test oversized input */
-    uint8_t oversized_data[MAX_SIZE + 1];
-    status = tfm_service_call(oversized_data, sizeof(oversized_data), NULL, 0);
-    if (status == SERVICE_ERROR_BUFFER_TOO_LARGE) {
-        printf("[Error Test] ✓ Oversized input rejected\n");
-    } else {
-        printf("[Error Test] ✗ Oversized input not handled\n");
-    }
-}
-```
+## Troubleshooting Common Test Issues
 
-### Stress Testing
-```c
-void test_stress_operations(void)
-{
-    printf("[Stress Test] Running stress test...\n");
-    
-    const int num_iterations = 100;
-    int success_count = 0;
-    
-    for (int i = 0; i < num_iterations; i++) {
-        tfm_service_status_t status = tfm_service_call(...);
-        if (status == SERVICE_SUCCESS) {
-            success_count++;
-        }
-        
-        /* Brief delay between operations */
-        osDelay(10);
-    }
-    
-    printf("[Stress Test] Success rate: %d/%d (%.1f%%)\n", 
-           success_count, num_iterations, 
-           (float)success_count * 100.0f / num_iterations);
-    
-    if (success_count == num_iterations) {
-        printf("[Stress Test] ✓ All operations successful\n");
-    } else {
-        printf("[Stress Test] ⚠ Some operations failed\n");
-    }
-}
-```
+*   **Build Failures**:
+    *   Check CMake configurations and dependencies.
+    *   Ensure the toolchain is correctly set up.
+*   **Device Not Booting/Crashing**:
+    *   Stack overflows in partitions (increase stack size in manifest).
+    *   Memory protection faults (MPU misconfiguration).
+    *   Incorrect peripheral initialization.
+*   **Tests Hanging**:
+    *   Deadlocks in IPC calls.
+    *   Infinite loops in test logic or service implementation.
+*   **Unexpected Test Failures**:
+    *   Race conditions.
+    *   Incorrect assumptions about hardware state or service behavior.
+    *   Issues in the underlying TF-M core or platform port.
 
-## Test Configuration
-
-### Compile-Time Test Control
-```c
-/* Enable/disable specific test categories */
-#define ENABLE_ECHO_TESTS        1
-#define ENABLE_CRYPTO_TESTS      1
-#define ENABLE_TINYMAIX_TESTS    1
-#define ENABLE_PERFORMANCE_TESTS 0
-#define ENABLE_STRESS_TESTS      0
-
-#ifdef DEV_MODE
-#define ENABLE_DEBUG_TESTS       1
-#else
-#define ENABLE_DEBUG_TESTS       0
-#endif
-```
-
-### Runtime Test Selection
-```c
-void run_selected_tests(uint32_t test_mask)
-{
-    if (test_mask & TEST_ECHO) {
-        test_echo_service();
-    }
-    
-    if (test_mask & TEST_CRYPTO) {
-        test_psa_encryption();
-        test_psa_hash();
-    }
-    
-    if (test_mask & TEST_TINYMAIX) {
-        test_tinymaix_comprehensive_suite();
-    }
-}
-```
-
-## Debugging Tests
-
-### Debug Output
-```c
-#ifdef DEBUG_TESTS
-#define TEST_DEBUG(fmt, ...) printf("[TEST DEBUG] " fmt, ##__VA_ARGS__)
-#else
-#define TEST_DEBUG(fmt, ...)
-#endif
-
-void debug_test_function(void)
-{
-    TEST_DEBUG("Entering test function\n");
-    TEST_DEBUG("Parameter value: %d\n", param);
-    /* ... test logic ... */
-    TEST_DEBUG("Test result: %d\n", result);
-}
-```
-
-### Test Isolation
-```c
-void isolated_test(void)
-{
-    /* Save system state */
-    save_system_state();
-    
-    /* Run test */
-    run_test_logic();
-    
-    /* Restore system state */
-    restore_system_state();
-}
-```
-
-## Next Steps
-
-- **[Secure Partitions](./secure-partitions.md)**: Test custom secure services
-- **[PSA API](./psa-api.md)**: Test PSA client-service communication
-- **[Troubleshooting](./troubleshooting.md)**: Debug failing tests
+Refer to the main [Troubleshooting Guide](./troubleshooting.md) for more general TF-M issues.

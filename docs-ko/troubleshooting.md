@@ -405,8 +405,8 @@ void debug_function(void) {
 ```c
 // 버퍼 내용 디버그
 void debug_print_buffer(const char* name, const uint8_t* buf, size_t size) {
-    INFO_UNPRIV("%s (%d 바이트): ", name, size);
-    for (size_t i = 0; i < size && i < 32; i++) {
+    INFO_UNPRIV("%s (%zu 바이트): ", name, size); // Use %zu for size_t
+    for (size_t i = 0; i < size && i < 32; i++) { // Use size_t for loop variable
         INFO_UNPRIV("%02x ", buf[i]);
         if ((i + 1) % 16 == 0) INFO_UNPRIV("\\n");
     }
@@ -431,12 +431,13 @@ const char* psa_error_to_string(psa_status_t status) {
         case PSA_ERROR_COMMUNICATION_FAILURE: return "COMMUNICATION_FAILURE";
         case PSA_ERROR_CONNECTION_REFUSED: return "CONNECTION_REFUSED";
         case PSA_ERROR_CONNECTION_BUSY: return "CONNECTION_BUSY";
-        default: return "UNKNOWN";
+        // Add more PSA error codes as needed
+        default: return "UNKNOWN_PSA_ERROR"; // More specific default
     }
 }
 
 // 사용법
-INFO_UNPRIV("PSA 호출 실패: %s (%d)\\n", psa_error_to_string(status), status);
+INFO_UNPRIV("작업에 걸린 시간: %lu ms\\n", end_time - start_time); // Use %lu for uint32_t
 ```
 
 ## 성능 디버깅
@@ -449,7 +450,7 @@ uint32_t start_time = osKernelGetTickCount();
 psa_status_t status = psa_call(handle, operation, ...);
 uint32_t end_time = osKernelGetTickCount();
 
-INFO_UNPRIV("작업에 걸린 시간: %d ms\\n", end_time - start_time);
+INFO_UNPRIV("작업에 걸린 시간: %lu ms\\n", end_time - start_time); // Use %lu for uint32_t
 ```
 
 ### 2. 메모리 사용량 추적
@@ -459,17 +460,25 @@ INFO_UNPRIV("작업에 걸린 시간: %d ms\\n", end_time - start_time);
 static size_t total_allocated = 0;
 static size_t peak_allocated = 0;
 
-void* debug_malloc(size_t size) {
+void* debug_malloc(size_t size) { // Corrected function signature
     void* ptr = malloc(size);
     if (ptr) {
         total_allocated += size;
         if (total_allocated > peak_allocated) {
             peak_allocated = total_allocated;
         }
-        INFO_UNPRIV("%d 바이트 할당, 총: %d, 최대: %d\\n", 
+        INFO_UNPRIV("할당된 바이트: %zu, 총: %zu, 최대: %zu\\n", // Use %zu for size_t
                    size, total_allocated, peak_allocated);
     }
     return ptr;
+}
+
+void debug_free(void* ptr, size_t size) { // Added size parameter for accurate tracking
+    if (ptr) {
+        free(ptr);
+        total_allocated -= size;
+        INFO_UNPRIV("해제된 바이트: %zu, 총: %zu\\n", size, total_allocated); // Use %zu for size_t
+    }
 }
 ```
 
@@ -477,14 +486,12 @@ void* debug_malloc(size_t size) {
 
 ```c
 // TrustZone 컨텍스트 스위치 모니터링
-static uint32_t context_switch_count = 0;
+// Note: get_context_switch_count() is a placeholder for a platform-specific function.
+// Implementation depends on the RTOS and hardware capabilities.
+static uint32_t context_switch_count = 0; // This might be tracked by the RTOS
 
-// PSA 호출 전 NS 측에서
-uint32_t before_switches = get_context_switch_count();
-psa_status_t status = psa_call(...);
-uint32_t after_switches = get_context_switch_count();
-
-INFO_UNPRIV("PSA 호출에 %d번의 컨텍스트 스위치 필요\\n", 
+// ...existing code...
+INFO_UNPRIV("PSA 호출에 %lu번의 컨텍스트 스위치 필요\\n", // Use %lu for uint32_t
            after_switches - before_switches);
 ```
 
@@ -667,10 +674,10 @@ python3 --version
 
 ```bash
 # UF2 파일 내용 검사
-hexdump -C build/spe/bin/tfm_s_ns_signed.uf2 | head -20
+hexdump -C build/spe/bin/tfm_s_ns_signed.uf2 | head -n 20 # Use -n for head
 
 # 암호화된 모델 검사
-hexdump -C models/encrypted_mnist_model_psa.bin | head -10
+hexdump -C models/encrypted_mnist_model_psa.bin | head -n 10 # Use -n for head
 # 첫 4바이트는 "TMAX" (0x544D4158)이어야 함
 ```
 
@@ -694,23 +701,23 @@ arm-none-eabi-nm build/nspe/bin/tfm_ns.axf | grep -E "(psa_|tfm_)"
 void dump_memory_region(const char* name, const void* addr, size_t size)
 {
     const uint8_t* bytes = (const uint8_t*)addr;
-    
-    INFO_UNPRIV("=== %s 메모리 덤프 (0x%08x, %d 바이트) ===\\n", 
-                name, (uint32_t)addr, size);
-    
+
+    INFO_UNPRIV("=== %s 메모리 덤프 (0x%08lx, %zu 바이트) ===\\n", // Use %lx for address, %zu for size_t
+                name, (uintptr_t)addr, size); // Cast addr to uintptr_t for printing
+
     for (size_t i = 0; i < size; i += 16) {
-        INFO_UNPRIV("%08x: ", (uint32_t)(addr + i));
-        
+        INFO_UNPRIV("%08lx: ", (uintptr_t)(addr + i)); // Cast addr to uintptr_t
+
         // 16진수 출력
         for (size_t j = 0; j < 16 && (i + j) < size; j++) {
             INFO_UNPRIV("%02x ", bytes[i + j]);
         }
-        
+
         // ASCII 출력
         INFO_UNPRIV(" |");
         for (size_t j = 0; j < 16 && (i + j) < size; j++) {
             char c = bytes[i + j];
-            INFO_UNPRIV("%c", (c >= 32 && c <= 126) ? c : '.');
+            INFO_UNPRIV("%c", (c >= 32 && c < 127) ? c : '.'); // Ensure printable ASCII
         }
         INFO_UNPRIV("|\\n");
     }
@@ -727,31 +734,44 @@ dump_memory_region("Model Data", g_model_buffer, 256);
 typedef struct {
     const char* name;
     uint32_t start_time;
-    uint32_t total_time;
+    uint64_t total_time; // Use uint64_t for total_time to prevent overflow
     uint32_t call_count;
     uint32_t min_time;
     uint32_t max_time;
 } perf_counter_t;
 
+#define MAX_PERF_COUNTERS 10 // Define MAX_PERF_COUNTERS
 static perf_counter_t g_perf_counters[MAX_PERF_COUNTERS];
+static uint8_t g_perf_counter_idx = 0; // Keep track of next available counter
+
+void perf_init(void) { // Initialize counters
+    memset(g_perf_counters, 0, sizeof(g_perf_counters));
+    g_perf_counter_idx = 0;
+}
 
 void perf_start(const char* name) {
-    for (int i = 0; i < MAX_PERF_COUNTERS; i++) {
-        if (!g_perf_counters[i].name || strcmp(g_perf_counters[i].name, name) == 0) {
-            g_perf_counters[i].name = name;
+    for (int i = 0; i < g_perf_counter_idx; i++) { // Search existing counters
+        if (g_perf_counters[i].name && strcmp(g_perf_counters[i].name, name) == 0) {
             g_perf_counters[i].start_time = osKernelGetTickCount();
-            break;
+            return;
         }
+    }
+    // Add new counter if not found and space available
+    if (g_perf_counter_idx < MAX_PERF_COUNTERS) {
+        g_perf_counters[g_perf_counter_idx].name = name;
+        g_perf_counters[g_perf_counter_idx].start_time = osKernelGetTickCount();
+        g_perf_counters[g_perf_counter_idx].min_time = UINT32_MAX; // Initialize min_time
+        g_perf_counter_idx++;
     }
 }
 
 void perf_end(const char* name) {
     uint32_t end_time = osKernelGetTickCount();
     
-    for (int i = 0; i < MAX_PERF_COUNTERS; i++) {
+    for (int i = 0; i < g_perf_counter_idx; i++) {
         if (g_perf_counters[i].name && strcmp(g_perf_counters[i].name, name) == 0) {
             uint32_t elapsed = end_time - g_perf_counters[i].start_time;
-            
+
             g_perf_counters[i].total_time += elapsed;
             g_perf_counters[i].call_count++;
             
@@ -769,20 +789,21 @@ void perf_end(const char* name) {
 
 void perf_report(void) {
     INFO_UNPRIV("=== 성능 보고서 ===\\n");
-    for (int i = 0; i < MAX_PERF_COUNTERS; i++) {
+    for (int i = 0; i < g_perf_counter_idx; i++) { // Iterate up to g_perf_counter_idx
         if (g_perf_counters[i].name && g_perf_counters[i].call_count > 0) {
             uint32_t avg = g_perf_counters[i].total_time / g_perf_counters[i].call_count;
-            INFO_UNPRIV("%s: 호출 %d회, 평균 %d ms, 최소 %d ms, 최대 %d ms\\n",
+            INFO_UNPRIV("%s: 호출 %lu회, 평균 %lu ms, 최소 %lu ms, 최대 %lu ms\\n", // Use %lu
                        g_perf_counters[i].name,
-                       g_perf_counters[i].call_count,
-                       avg,
-                       g_perf_counters[i].min_time,
-                       g_perf_counters[i].max_time);
+                       g_perf_counters[i].call_count, // This is uint32_t
+                       avg, // This is uint32_t
+                       g_perf_counters[i].min_time, // This is uint32_t
+                       g_perf_counters[i].max_time); // This is uint32_t
         }
     }
 }
 
 // 사용 예
+// perf_init(); // Call before starting any profiling
 perf_start("inference");
 tm_run(&g_model, input, output);
 perf_end("inference");

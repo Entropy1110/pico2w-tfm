@@ -1,34 +1,78 @@
-# Documentation
+# Developer Documentation
 
 This directory contains comprehensive developer documentation for the Pico 2W TF-M TinyMaix project.
 
 ## 📚 Document Index
 
-### Core Architecture
-- **[TF-M Architecture](./tfm-architecture.md)** - Trusted Firmware-M dual-world architecture and security model
-- **[Secure Partitions](./secure-partitions.md)** - Development guide for custom secure services
-- **[PSA API](./psa-api.md)** - Platform Security Architecture API usage patterns
+### 🏗️ System Architecture
+- **[TF-M Architecture](./tfm-architecture.md)** - ARM TrustZone based dual-world architecture
+- **[Secure Partition Development](./secure-partitions.md)** - PSA service implementation guide
 
-### Machine Learning Integration
-- **[TinyMaix Integration](./tinymaix-integration.md)** - Neural network inference in secure partitions
-- **[Model Encryption](./model-encryption.md)** - Secure model deployment with HUK-derived keys
+### 🤖 Machine Learning Integration
+- **[TinyMaix Integration](./tinymaix-integration.md)** - Implementing ML inference in secure partitions
+- **[Model Encryption](./model-encryption.md)** - HUK-based model security
 
-### Development Tools
-- **[Build System](./build-system.md)** - CMake configuration and build processes
-- **[Testing Framework](./testing-framework.md)** - Test architecture and development patterns
+### 🔧 Development Tools
+- **[PSA API](./psa-api.md)** - Communication between secure/non-secure worlds
+- **[Build System](./build-system.md)** - CMake configuration and build process
+- **[Testing Framework](./testing-framework.md)** - Automated testing system
 
-### Troubleshooting
+### 🛠️ Troubleshooting
 - **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
 
-## 🎯 Quick Start
+## 🚀 Getting Started
 
-For immediate development setup, see:
-1. [Build System](./build-system.md#quick-start) - Get building immediately
-2. [TF-M Architecture](./tfm-architecture.md#development-overview) - Understand the security model
-3. [Secure Partitions](./secure-partitions.md#creating-new-partition) - Add your first secure service
+If you are new to the project, it is recommended to read the documents in the following order:
 
-## 🔒 Security Notes
+1.  **[TF-M Architecture](./tfm-architecture.md)** - Understand the overall system
+2.  **[Build System](./build-system.md)** - How to build the project
+3.  **[Secure Partition Development](./secure-partitions.md)** - Develop secure services
+4.  **[TinyMaix Integration](./tinymaix-integration.md)** - Implement ML features
+5.  **[Testing Framework](./testing-framework.md)** - Write and run tests
 
-This project implements ARM TrustZone security features. Please review the security considerations in each document before development.
+## 🔑 Key Concepts
 
-**DEV_MODE Warning**: Development mode exposes HUK-derived encryption keys for debugging. Never deploy DEV_MODE builds to production hardware.
+### DEV_MODE
+- **Purpose**: HUK-derived key extraction and debugging
+- **Usage**: `./build.sh DEV_MODE`
+- **Security Warning**: Never use in a production environment
+
+### HUK Key Extraction Workflow
+```bash
+# 1. Build with DEV_MODE
+./build.sh DEV_MODE
+
+# 2. Copy the key from serial output
+# "HUK-derived key: 40c962d66a1fa40346cac8b7e612741e"
+
+# 3. Convert hex to binary
+echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
+
+# 4. Encrypt the model with the extracted key
+python3 tools/tinymaix_model_encryptor.py \
+    --input models/mnist_valid_q.h \
+    --output models/encrypted_mnist_model_psa.bin \
+    --key-file models/model_key_psa.bin \
+    --generate-c-header
+```
+
+### 🔒 Security Considerations
+- HUK keys are device-specific and cannot be changed.
+- DEV_MODE should only be used during development.
+- All models must be encrypted before deployment.
+- Maintain security boundaries through PSA APIs.
+
+## 🤝 Contributing
+
+Contributions to improve documentation are welcome:
+
+1.  Report issues for unclear sections or errors.
+2.  Add documentation for new features or use cases.
+3.  Provide example code or practical guides.
+
+## 🔗 Additional Resources
+
+- **[Korean Documentation](../docs-ko/)** - Korean version of developer documents
+- **[Project README](../README.md)** - Project overview and quick start
+- **[TF-M Official Documentation](https://tf-m-user-guide.trustedfirmware.org/)** - Detailed guide for the TF-M framework
+- **[PSA Specification](https://developer.arm.com/architectures/security-architectures/platform-security-architecture)** - ARM PSA architecture specification

@@ -416,7 +416,7 @@ static void handle_tinymaix_request(psa_msg_t *msg)
             break;
     }
     
-    psa_reply(msg.handle, status);
+    psa_reply(msg->handle, status);
 }
 
 /* 암호화된 모델 로드 */
@@ -778,6 +778,17 @@ python3 tools/tinymaix_model_encryptor.py \
 # - models/encrypted_mnist_model_psa.bin (암호화된 바이너리)
 # - models/encrypted_mnist_model_psa.h (C 헤더)
 # - models/encrypted_mnist_model_psa.c (C 소스)
+```
+
+### 암호화된 모델 헤더 구조
+```c
+typedef struct {
+    uint32_t magic;              // "TMAX" (0x54 0x4D 0x41 0x58)
+    uint32_t version;            // Format version = 3 for CBC
+    uint32_t original_size;      // Size of decrypted model data
+    uint8_t iv[16];              // AES-CBC IV (128 bits)
+    /* Encrypted model data follows */
+} encrypted_tinymaix_header_cbc_t;
 ```
 
 ### 생성된 암호화 모델

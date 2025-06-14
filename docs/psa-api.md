@@ -1,856 +1,283 @@
-# PSA API Usage Guide
+# PSA API Guide for pico2w-tfm-tflm
 
-## Overview
+## 1. Introduction
 
-Platform Security Architecture (PSA) provides standardized APIs for secure communication between non-secure and secure environments. This guide covers PSA client-service patterns used in the TF-M TinyMaix project.
+The Platform Security Architecture (PSA) provides a framework for designing and building secure embedded systems. Central to this is the PSA Functional API, which offers a standardized interface for accessing security services. In the `pico2w-tfm-tflm` project, these APIs are crucial for implementing secure functionalities, particularly those involving cryptographic operations, secure storage, and attestation, all managed within the Trusted Firmware-M (TF-M) environment.
 
-## PSA Communication Model
+This document outlines the key PSA APIs utilized in this project and provides guidance on their usage.
 
-### Client-Service Architecture
-```
-Non-Secure Client              Secure Service
-      │                             │
-      ▼                             ▼
-┌─────────────┐               ┌─────────────┐
-│ psa_connect │──────────────▶│ PSA_IPC_    │
-│             │               │ CONNECT     │
-└─────────────┘               └─────────────┘
-      │                             │
-      ▼                             ▼
-┌─────────────┐               ┌─────────────┐
-│ psa_call    │──────────────▶│ Service     │
-│             │               │ Handler     │
-└─────────────┘               └─────────────┘
-      │                             │
-      ▼                             ▼
-┌─────────────┐               ┌─────────────┐
-│ psa_close   │──────────────▶│ PSA_IPC_    │
-│             │               │ DISCONNECT  │
-└─────────────┘               └─────────────┘
-```
+## 2. Core PSA APIs Utilized
 
-### Communication Types
+The `pico2w-tfm-tflm` project leverages several PSA Functional APIs provided by TF-M. These APIs enable secure operations by abstracting the underlying hardware and software security mechanisms.
 
-#### 1. Connection-based Services
-- **State**: Maintain state between calls
-- **Lifecycle**: connect → call(s) → close
-- **Use Cases**: Complex services with context
-- **Examples**: TinyMaix inference, Echo service
+### 2.1. PSA Cryptography API
 
-#### 2. Stateless Services  
-- **State**: No state maintained
-- **Lifecycle**: call only
-- **Use Cases**: Simple operations
-- **Examples**: Some crypto operations
+The PSA Cryptography API provides a portable interface for cryptographic operations. It supports a wide range of cryptographic primitives, including hashing, MAC (Message Authentication Code) generation and verification, symmetric and asymmetric encryption/decryption, and key agreement.
 
-## Client-Side PSA API
+**Key Functions and Concepts:**
 
-### Basic Connection Pattern
+*   **Key Management:**
+    *   `psa_import_key()`: Imports a key in binary format into the PSA crypto service.
+    *   `psa_destroy_key()`: Destroys a key from the PSA crypto service.
+    *   `psa_generate_key()`: Generates a new key.
+    *   `psa_export_key()`: Exports a key in binary format.
+    *   `psa_export_public_key()`: Exports a public key.
+*   **Hashing:**
+    *   `psa_hash_setup()`: Sets up a hash operation.
+    *   `psa_hash_update()`: Adds data to an ongoing hash operation.
+    *   `psa_hash_finish()`: Finalizes a hash operation and retrieves the hash.
+    *   `psa_hash_compare()`: Compares a calculated hash with an expected value.
+*   **MAC Operations:**
+    *   `psa_mac_sign_setup()`: Sets up a MAC generation operation.
+    *   `psa_mac_verify_setup()`: Sets up a MAC verification operation.
+    *   `psa_mac_update()`: Adds data to an ongoing MAC operation.
+    *   `psa_mac_sign_finish()`: Finalizes MAC generation.
+    *   `psa_mac_verify_finish()`: Finalizes MAC verification.
+*   **Symmetric Ciphers (AES):**
+    *   `psa_cipher_encrypt_setup()`: Sets up a symmetric encryption operation.
+    *   `psa_cipher_decrypt_setup()`: Sets up a symmetric decryption operation.
+    *   `psa_cipher_generate_iv()`: Generates an Initialization Vector (IV).
+    *   `psa_cipher_set_iv()`: Sets the IV for a cipher operation.
+    *   `psa_cipher_update()`: Processes data through the cipher.
+    *   `psa_cipher_finish()`: Finalizes the cipher operation.
+*   **Asymmetric Cryptography (RSA, ECC):**
+    *   `psa_sign_hash()`: Signs a pre-calculated hash.
+    *   `psa_verify_hash()`: Verifies a signature against a pre-calculated hash.
+    *   `psa_asymmetric_encrypt()`: Encrypts data using an asymmetric public key.
+    *   `psa_asymmetric_decrypt()`: Decrypts data using an asymmetric private key.
+*   **Key Derivation:**
+    *   `psa_key_derivation_setup()`: Sets up a key derivation operation.
+    *   `psa_key_derivation_input_key()`: Inputs a key into the derivation process.
+    *   `psa_key_derivation_input_bytes()`: Inputs other data (e.g., salt, info) into the derivation.
+    *   `psa_key_derivation_output_key()`: Derives a new key.
+    *   `psa_key_derivation_output_bytes()`: Derives raw bytes.
+
+**Usage Example (AES-CBC Encryption):**
 ```c
-#include "psa/client.h"
+#include "psa/crypto.h"
+#include <string.h>
 
-tfm_service_status_t call_secure_service(void)
+// Example: Encrypt data using AES-128-CBC
+psa_status_t encrypt_data_aes_cbc(
+    const uint8_t *key_data, size_t key_data_size,
+    const uint8_t *iv, size_t iv_size,
+    const uint8_t *plaintext, size_t plaintext_size,
+    uint8_t *ciphertext, size_t ciphertext_buffer_size, size_t *ciphertext_length)
 {
-    psa_handle_t handle;
+    psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+    psa_key_id_t key_id;
     psa_status_t status;
-    
-    /* Step 1: Connect to service */
-    handle = psa_connect(SERVICE_SID, SERVICE_VERSION);
-    if (handle <= 0) {
-        return SERVICE_ERROR_CONNECTION_FAILED;
-    }
-    
-    /* Step 2: Call service operation */
-    status = psa_call(handle, OPERATION_TYPE, NULL, 0, NULL, 0);
-    
-    /* Step 3: Close connection */
-    psa_close(handle);
-    
+    psa_cipher_operation_t operation = PSA_CIPHER_OPERATION_INIT;
+
+    // Set key attributes
+    psa_set_key_type(&attributes, PSA_KEY_TYPE_AES);
+    psa_set_key_bits(&attributes, PSA_BYTES_TO_BITS(key_data_size));
+    psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT);
+    psa_set_key_algorithm(&attributes, PSA_ALG_CBC_NO_PADDING); // Or PSA_ALG_CBC_PKCS7
+
+    // Import the key
+    status = psa_import_key(&attributes, key_data, key_data_size, &key_id);
     if (status != PSA_SUCCESS) {
-        return SERVICE_ERROR_CALL_FAILED;
+        return status;
     }
-    
-    return SERVICE_SUCCESS;
-}
-```
 
-### Data Transfer Patterns
-
-#### Input Data Transfer
-```c
-tfm_service_status_t send_data_to_service(const uint8_t* input_data, 
-                                          size_t input_size)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    
-    /* Connect to service */
-    handle = psa_connect(SERVICE_SID, 1);
-    if (handle <= 0) {
-        return SERVICE_ERROR_CONNECTION_FAILED;
-    }
-    
-    /* Setup input vector */
-    psa_invec input_vec[] = {
-        {.base = input_data, .len = input_size}
-    };
-    
-    /* Call service with input data */
-    status = psa_call(handle, OPERATION_WITH_INPUT, 
-                      input_vec, 1,  /* 1 input vector */
-                      NULL, 0);      /* No output vectors */
-    
-    psa_close(handle);
-    return (status == PSA_SUCCESS) ? SERVICE_SUCCESS : SERVICE_ERROR_CALL_FAILED;
-}
-```
-
-#### Output Data Transfer
-```c
-tfm_service_status_t get_data_from_service(uint8_t* output_data, 
-                                           size_t output_size,
-                                           size_t* actual_size)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    
-    /* Connect to service */
-    handle = psa_connect(SERVICE_SID, 1);
-    if (handle <= 0) {
-        return SERVICE_ERROR_CONNECTION_FAILED;
-    }
-    
-    /* Setup output vector */
-    psa_outvec output_vec[] = {
-        {.base = output_data, .len = output_size}
-    };
-    
-    /* Call service to get output data */
-    status = psa_call(handle, OPERATION_WITH_OUTPUT,
-                      NULL, 0,       /* No input vectors */
-                      output_vec, 1); /* 1 output vector */
-    
-    psa_close(handle);
-    
-    if (status == PSA_SUCCESS) {
-        *actual_size = output_vec[0].len; /* Actual bytes written */
-        return SERVICE_SUCCESS;
-    }
-    
-    return SERVICE_ERROR_CALL_FAILED;
-}
-```
-
-#### Bidirectional Data Transfer
-```c
-tfm_service_status_t process_data(const uint8_t* input_data, size_t input_size,
-                                  uint8_t* output_data, size_t output_size)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    
-    /* Connect to service */
-    handle = psa_connect(SERVICE_SID, 1);
-    if (handle <= 0) {
-        return SERVICE_ERROR_CONNECTION_FAILED;
-    }
-    
-    /* Setup input and output vectors */
-    psa_invec input_vec[] = {
-        {.base = input_data, .len = input_size}
-    };
-    
-    psa_outvec output_vec[] = {
-        {.base = output_data, .len = output_size}
-    };
-    
-    /* Call service with both input and output */
-    status = psa_call(handle, OPERATION_PROCESS_DATA,
-                      input_vec, 1,   /* 1 input vector */
-                      output_vec, 1); /* 1 output vector */
-    
-    psa_close(handle);
-    return (status == PSA_SUCCESS) ? SERVICE_SUCCESS : SERVICE_ERROR_CALL_FAILED;
-}
-```
-
-### Multiple Data Vectors
-```c
-tfm_service_status_t complex_operation(const uint8_t* data1, size_t size1,
-                                       const uint8_t* data2, size_t size2,
-                                       uint8_t* result1, size_t result1_size,
-                                       uint8_t* result2, size_t result2_size)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    
-    /* Connect to service */
-    handle = psa_connect(SERVICE_SID, 1);
-    if (handle <= 0) {
-        return SERVICE_ERROR_CONNECTION_FAILED;
-    }
-    
-    /* Multiple input vectors */
-    psa_invec input_vec[] = {
-        {.base = data1, .len = size1},
-        {.base = data2, .len = size2}
-    };
-    
-    /* Multiple output vectors */
-    psa_outvec output_vec[] = {
-        {.base = result1, .len = result1_size},
-        {.base = result2, .len = result2_size}
-    };
-    
-    /* Call with multiple vectors */
-    status = psa_call(handle, OPERATION_COMPLEX,
-                      input_vec, 2,   /* 2 input vectors */
-                      output_vec, 2); /* 2 output vectors */
-    
-    psa_close(handle);
-    return (status == PSA_SUCCESS) ? SERVICE_SUCCESS : SERVICE_ERROR_CALL_FAILED;
-}
-```
-
-## Service-Side PSA API
-
-### Service Entry Point Structure
-```c
-#include "psa/service.h"
-#include "psa_manifest/my_service_manifest.h"
-
-void my_service_entry(void)
-{
-    psa_msg_t msg;
-    psa_status_t status;
-    
-    /* Service main loop */
-    while (1) {
-        /* Wait for messages */
-        psa_wait(MY_SERVICE_SIGNAL, PSA_BLOCK);
-        
-        /* Get the message */
-        if (psa_get(MY_SERVICE_SIGNAL, &msg) != PSA_SUCCESS) {
-            continue;
-        }
-        
-        /* Process message by type */
-        switch (msg.type) {
-            case PSA_IPC_CONNECT:
-                handle_connect(&msg);
-                break;
-                
-            case OPERATION_TYPE_1:
-                handle_operation_1(&msg);
-                break;
-                
-            case OPERATION_TYPE_2:
-                handle_operation_2(&msg);
-                break;
-                
-            case PSA_IPC_DISCONNECT:
-                handle_disconnect(&msg);
-                break;
-                
-            default:
-                psa_reply(msg.handle, PSA_ERROR_NOT_SUPPORTED);
-                break;
-        }
-    }
-}
-```
-
-### Connection Handling
-```c
-static void handle_connect(psa_msg_t* msg)
-{
-    /* Validate connection request */
-    if (msg->client_id < 0) {
-        /* Reject secure clients if not supported */
-        psa_reply(msg->handle, PSA_ERROR_CONNECTION_REFUSED);
-        return;
-    }
-    
-    /* Initialize service state for this client (if needed) */
-    /* ... service-specific initialization ... */
-    
-    /* Accept connection */
-    psa_reply(msg->handle, PSA_SUCCESS);
-}
-
-static void handle_disconnect(psa_msg_t* msg)
-{
-    /* Cleanup service state for this client (if needed) */
-    /* ... service-specific cleanup ... */
-    
-    /* Acknowledge disconnection */
-    psa_reply(msg->handle, PSA_SUCCESS);
-}
-```
-
-### Input Data Handling
-```c
-static void handle_operation_with_input(psa_msg_t* msg)
-{
-    uint8_t input_buffer[MAX_INPUT_SIZE];
-    size_t bytes_read;
-    psa_status_t status = PSA_SUCCESS;
-    
-    /* Validate input size */
-    if (msg->in_size[0] > MAX_INPUT_SIZE) {
-        status = PSA_ERROR_INVALID_ARGUMENT;
-        goto reply;
-    }
-    
-    /* Read input data */
-    if (msg->in_size[0] > 0) {
-        bytes_read = psa_read(msg->handle, 0, input_buffer, msg->in_size[0]);
-        if (bytes_read != msg->in_size[0]) {
-            status = PSA_ERROR_COMMUNICATION_FAILURE;
-            goto reply;
-        }
-        
-        /* Process input data */
-        status = process_input_data(input_buffer, bytes_read);
-    }
-    
-reply:
-    psa_reply(msg->handle, status);
-}
-```
-
-### Output Data Handling  
-```c
-static void handle_operation_with_output(psa_msg_t* msg)
-{
-    uint8_t output_buffer[MAX_OUTPUT_SIZE];
-    size_t output_length;
-    psa_status_t status;
-    
-    /* Generate output data */
-    status = generate_output_data(output_buffer, sizeof(output_buffer), 
-                                  &output_length);
+    // Setup encryption operation
+    status = psa_cipher_encrypt_setup(&operation, key_id, PSA_ALG_CBC_NO_PADDING);
     if (status != PSA_SUCCESS) {
-        goto reply;
+        goto cleanup_key;
     }
-    
-    /* Write output data if client provided buffer */
-    if (msg->out_size[0] > 0) {
-        size_t bytes_to_write = MIN(output_length, msg->out_size[0]);
-        psa_write(msg->handle, 0, output_buffer, bytes_to_write);
-    }
-    
-reply:
-    psa_reply(msg->handle, status);
-}
-```
 
-### Complex Data Processing
-```c
-static void handle_complex_operation(psa_msg_t* msg)
-{
-    uint8_t input_buffer1[MAX_INPUT1_SIZE];
-    uint8_t input_buffer2[MAX_INPUT2_SIZE];
-    uint8_t output_buffer1[MAX_OUTPUT1_SIZE];
-    uint8_t output_buffer2[MAX_OUTPUT2_SIZE];
-    size_t bytes_read;
-    psa_status_t status = PSA_SUCCESS;
-    
-    /* Read first input */
-    if (msg->in_size[0] > 0) {
-        if (msg->in_size[0] > MAX_INPUT1_SIZE) {
-            status = PSA_ERROR_INVALID_ARGUMENT;
-            goto reply;
-        }
-        
-        bytes_read = psa_read(msg->handle, 0, input_buffer1, msg->in_size[0]);
-        if (bytes_read != msg->in_size[0]) {
-            status = PSA_ERROR_COMMUNICATION_FAILURE;
-            goto reply;
+    // Set IV
+    if (iv_size > 0) {
+        status = psa_cipher_set_iv(&operation, iv, iv_size);
+        if (status != PSA_SUCCESS) {
+            goto cleanup_op;
         }
     }
-    
-    /* Read second input */
-    if (msg->in_size[1] > 0) {
-        if (msg->in_size[1] > MAX_INPUT2_SIZE) {
-            status = PSA_ERROR_INVALID_ARGUMENT;
-            goto reply;
-        }
-        
-        bytes_read = psa_read(msg->handle, 1, input_buffer2, msg->in_size[1]);
-        if (bytes_read != msg->in_size[1]) {
-            status = PSA_ERROR_COMMUNICATION_FAILURE;
-            goto reply;
-        }
-    }
-    
-    /* Process data */
-    status = process_complex_data(input_buffer1, msg->in_size[0],
-                                  input_buffer2, msg->in_size[1],
-                                  output_buffer1, sizeof(output_buffer1),
-                                  output_buffer2, sizeof(output_buffer2));
+
+    // Encrypt
+    status = psa_cipher_update(&operation, plaintext, plaintext_size,
+                               ciphertext, ciphertext_buffer_size, ciphertext_length);
     if (status != PSA_SUCCESS) {
-        goto reply;
+        goto cleanup_op;
     }
-    
-    /* Write outputs */
-    if (msg->out_size[0] > 0) {
-        psa_write(msg->handle, 0, output_buffer1, 
-                  MIN(sizeof(output_buffer1), msg->out_size[0]));
-    }
-    
-    if (msg->out_size[1] > 0) {
-        psa_write(msg->handle, 1, output_buffer2,
-                  MIN(sizeof(output_buffer2), msg->out_size[1]));
-    }
-    
-reply:
-    psa_reply(msg->handle, status);
+
+    // Finalize encryption (handles padding if PKCS7 is used)
+    size_t final_output_len = 0;
+    status = psa_cipher_finish(&operation, ciphertext + *ciphertext_length,
+                               ciphertext_buffer_size - *ciphertext_length, &final_output_len);
+    *ciphertext_length += final_output_len;
+
+cleanup_op:
+    psa_cipher_abort(&operation);
+cleanup_key:
+    psa_destroy_key(key_id);
+    return status;
 }
 ```
 
-## Real-World Examples
+### 2.2. PSA Protected Storage API
 
-### TinyMaix Inference Service
+The PSA Protected Storage API provides a means to store small amounts of data (assets) with confidentiality, integrity, and authenticity. It is typically used for storing sensitive data like cryptographic keys, configuration settings, or device identity information.
 
-#### Client Side
+**Key Functions and Concepts:**
+
+*   **UID (Unique Identifier):** Each asset is identified by a unique 64-bit integer.
+*   **Create Flags:** Control the access and properties of the asset (e.g., write-once).
+    *   `PSA_STORAGE_FLAG_NONE`
+    *   `PSA_STORAGE_FLAG_WRITE_ONCE`
+*   **Operations:**
+    *   `psa_ps_set()`: Creates a new asset or modifies an existing one.
+    *   `psa_ps_get()`: Retrieves an asset.
+    *   `psa_ps_get_info()`: Retrieves metadata about an asset (size, flags).
+    *   `psa_ps_remove()`: Deletes an asset.
+
+**Usage Example:**
 ```c
-/* Load encrypted model */
-tfm_tinymaix_status_t tfm_tinymaix_load_encrypted_model(void)
+#include "psa/protected_storage.h"
+#include <string.h>
+
+// Example: Store and retrieve a secret
+psa_status_t store_and_retrieve_secret(psa_storage_uid_t uid,
+                                       const uint8_t *secret_data, size_t secret_size)
 {
-    psa_handle_t handle;
     psa_status_t status;
-    uint32_t result = 1;
-    
-    /* Connect to TinyMaix service */
-    handle = psa_connect(TFM_TINYMAIX_INFERENCE_SID, 1);
-    if (handle <= 0) {
-        return TINYMAIX_STATUS_ERROR_GENERIC;
-    }
-    
-    /* Setup output vector for result */
-    psa_outvec out_vec[] = {
-        {.base = &result, .len = sizeof(result)}
-    };
-    
-    /* Call load model operation */
-    status = psa_call(handle, TINYMAIX_IPC_LOAD_ENCRYPTED_MODEL, 
-                      NULL, 0, out_vec, 1);
-    
-    psa_close(handle);
-    
-    if (status != PSA_SUCCESS || result != 0) {
-        return TINYMAIX_STATUS_ERROR_MODEL_LOAD_FAILED;
-    }
-    
-    return TINYMAIX_STATUS_SUCCESS;
-}
 
-/* Run inference with custom data */
-tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(
-    const uint8_t* image_data, size_t image_size, int* predicted_class)
+    // Store the secret
+    status = psa_ps_set(uid, secret_size, secret_data, PSA_STORAGE_FLAG_NONE);
+    if (status != PSA_SUCCESS) {
+        // Handle error (e.g., PSA_ERROR_INSUFFICIENT_SPACE, PSA_ERROR_ALREADY_EXISTS)
+        return status;
+    }
+
+    // Retrieve the secret
+    uint8_t retrieved_buffer[64]; // Ensure buffer is large enough
+    size_t retrieved_length = 0;
+    status = psa_ps_get(uid, 0, sizeof(retrieved_buffer), retrieved_buffer, &retrieved_length);
+    if (status != PSA_SUCCESS) {
+        // Handle error
+        return status;
+    }
+
+    if (retrieved_length != secret_size || memcmp(secret_data, retrieved_buffer, secret_size) != 0) {
+        // Data mismatch
+        return PSA_ERROR_CORRUPTION_DETECTED;
+    }
+
+    // Optionally, remove the secret
+    // status = psa_ps_remove(uid);
+    // if (status != PSA_SUCCESS) { /* Handle error */ }
+
+    return PSA_SUCCESS;
+}
+```
+
+### 2.3. PSA Internal Trusted Storage (ITS) API
+
+The PSA Internal Trusted Storage API is similar to Protected Storage but is designed for data that does not require the same level of protection against sophisticated physical attacks. It's suitable for storing data that needs integrity and rollback protection but where confidentiality might be less critical or handled by other means (e.g., application-level encryption).
+
+**Key Functions and Concepts:**
+
+*   The API functions are analogous to Protected Storage:
+    *   `psa_its_set()`
+    *   `psa_its_get()`
+    *   `psa_its_get_info()`
+    *   `psa_its_remove()`
+*   ITS is generally faster than PS due to potentially simpler protection mechanisms.
+
+**Note:** The choice between PS and ITS depends on the security requirements of the data being stored. For highly sensitive data like private keys, PS is preferred.
+
+### 2.4. PSA Initial Attestation API
+
+The PSA Initial Attestation API allows the device to prove its identity and current software state to a relying party. It generates a token containing claims about the device, signed by a unique Attestation Key.
+
+**Key Functions and Concepts:**
+
+*   **Attestation Token:** A data structure (e.g., CBOR-encoded) containing claims.
+*   **Claims:** Information about the device, such as:
+    *   Instance ID (unique device identifier)
+    *   Boot status / Lifecycle state
+    *   Software component measurements (hashes of firmware images)
+    *   Hardware version
+*   **Operations:**
+    *   `psa_initial_attest_get_token()`: Retrieves the attestation token.
+    *   `psa_initial_attest_get_token_size()`: Gets the required buffer size for the token.
+
+**Usage Example:**
+```c
+#include "psa/initial_attestation.h"
+
+// Example: Get an attestation token
+psa_status_t get_attestation_token(const uint8_t *challenge, size_t challenge_size,
+                                   uint8_t *token_buffer, size_t token_buffer_size,
+                                   size_t *token_size)
 {
-    psa_handle_t handle;
     psa_status_t status;
-    int result = -1;
-    
-    if (!image_data || !predicted_class) {
-        return TINYMAIX_STATUS_ERROR_INVALID_PARAM;
+
+    // Get the size of the token
+    status = psa_initial_attest_get_token_size(challenge_size, token_size);
+    if (status != PSA_SUCCESS) {
+        return status;
     }
-    
-    /* Connect to service */
-    handle = psa_connect(TFM_TINYMAIX_INFERENCE_SID, 1);
-    if (handle <= 0) {
-        return TINYMAIX_STATUS_ERROR_GENERIC;
+
+    if (*token_size > token_buffer_size) {
+        return PSA_ERROR_BUFFER_TOO_SMALL;
     }
-    
-    /* Setup input and output vectors */
-    psa_invec in_vec[] = {
-        {.base = image_data, .len = image_size}
-    };
-    
-    psa_outvec out_vec[] = {
-        {.base = &result, .len = sizeof(result)}
-    };
-    
-    /* Call inference operation */
-    status = psa_call(handle, TINYMAIX_IPC_RUN_INFERENCE,
-                      in_vec, 1, out_vec, 1);
-    
-    psa_close(handle);
-    
-    if (status != PSA_SUCCESS || result < 0) {
-        return TINYMAIX_STATUS_ERROR_INFERENCE_FAILED;
+
+    // Get the token
+    status = psa_initial_attest_get_token(challenge, challenge_size,
+                                          token_buffer, token_buffer_size, token_size);
+    if (status != PSA_SUCCESS) {
+        // Handle error
+        return status;
     }
-    
-    *predicted_class = result;
-    return TINYMAIX_STATUS_SUCCESS;
+
+    return PSA_SUCCESS;
 }
 ```
 
-#### Service Side
-```c
-/* TinyMaix service message handler */
-void tinymaix_inference_entry(void)
-{
-    psa_msg_t msg;
-    psa_status_t status;
-    
-    while (1) {
-        psa_wait(TFM_TINYMAIX_INFERENCE_SIGNAL, PSA_BLOCK);
-        
-        if (psa_get(TFM_TINYMAIX_INFERENCE_SIGNAL, &msg) != PSA_SUCCESS) {
-            continue;
-        }
-        
-        switch (msg.type) {
-            case PSA_IPC_CONNECT:
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            case TINYMAIX_IPC_LOAD_ENCRYPTED_MODEL:
-                status = handle_load_model(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case TINYMAIX_IPC_RUN_INFERENCE:
-                status = handle_run_inference(&msg);
-                psa_reply(msg.handle, status);
-                break;
-                
-            case PSA_IPC_DISCONNECT:
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            default:
-                psa_reply(msg.handle, PSA_ERROR_NOT_SUPPORTED);
-                break;
-        }
-    }
-}
+## 3. PSA API Usage in `pico2w-tfm-tflm`
 
-static psa_status_t handle_run_inference(psa_msg_t* msg)
-{
-    uint8_t image_data[28*28];
-    size_t bytes_read;
-    int result = -1;
-    
-    /* Check if model is loaded */
-    if (!g_model_loaded) {
-        return PSA_ERROR_BAD_STATE;
-    }
-    
-    /* Read image data if provided */
-    if (msg->in_size[0] == 28*28) {
-        bytes_read = psa_read(msg->handle, 0, image_data, msg->in_size[0]);
-        if (bytes_read != msg->in_size[0]) {
-            return PSA_ERROR_COMMUNICATION_FAILURE;
-        }
-        
-        /* Run inference with custom image */
-        result = run_tinymaix_inference(image_data);
-    } else if (msg->in_size[0] == 0) {
-        /* Use built-in test image */
-        result = run_tinymaix_inference(built_in_test_image);
-    } else {
-        return PSA_ERROR_INVALID_ARGUMENT;
-    }
-    
-    /* Write result if output buffer provided */
-    if (msg->out_size[0] >= sizeof(int) && result >= 0) {
-        psa_write(msg->handle, 0, &result, sizeof(result));
-    }
-    
-    return (result >= 0) ? PSA_SUCCESS : PSA_ERROR_GENERIC_ERROR;
-}
-```
+In the `pico2w-tfm-tflm` project, PSA APIs are primarily used for:
 
-### Echo Service Example
+*   **Model Encryption/Decryption:** The `model-encryption.md` guide details how HUK (Hardware Unique Key) is used via PSA key derivation (`psa_key_derivation_setup`, `psa_key_derivation_input_key`, `psa_key_derivation_output_bytes`) to generate model-specific encryption keys. The actual decryption of TinyMaix models in the secure partition uses `psa_cipher_decrypt()` with AES-CBC.
+*   **Secure Storage of Keys/Credentials:** While not explicitly detailed in all examples, PSA Protected Storage could be used to store derived keys or other sensitive credentials if they need to persist across reboots.
+*   **Secure Boot and Firmware Update:** TF-M itself relies heavily on PSA Crypto APIs for signature verification during secure boot and firmware updates, ensuring the integrity and authenticity of the firmware.
+*   **Inter-partition Communication:** Secure services (Partitions) within TF-M expose functionalities that often wrap PSA API calls. For instance, a custom secure service might use PSA Crypto to perform a specific cryptographic task requested by the Non-Secure Processing Environment (NSPE).
 
-#### Client Side
-```c
-tfm_echo_status_t tfm_echo_call(const uint8_t* input, size_t input_len,
-                                uint8_t* output, size_t output_len)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    
-    /* Connect to echo service */
-    handle = psa_connect(TFM_ECHO_SID, 1);
-    if (handle <= 0) {
-        return ECHO_STATUS_ERROR_GENERIC;
-    }
-    
-    /* Setup vectors */
-    psa_invec in_vec[] = {{.base = input, .len = input_len}};
-    psa_outvec out_vec[] = {{.base = output, .len = output_len}};
-    
-    /* Call echo operation */
-    status = psa_call(handle, ECHO_IPC_CALL, in_vec, 1, out_vec, 1);
-    
-    psa_close(handle);
-    
-    return (status == PSA_SUCCESS) ? ECHO_STATUS_SUCCESS : ECHO_STATUS_ERROR_GENERIC;
-}
-```
+## 4. Error Handling
 
-#### Service Side
-```c
-void echo_service_entry(void)
-{
-    psa_msg_t msg;
-    
-    while (1) {
-        psa_wait(TFM_ECHO_SIGNAL, PSA_BLOCK);
-        
-        if (psa_get(TFM_ECHO_SIGNAL, &msg) != PSA_SUCCESS) {
-            continue;
-        }
-        
-        switch (msg.type) {
-            case PSA_IPC_CONNECT:
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            case ECHO_IPC_CALL:
-                handle_echo_call(&msg);
-                break;
-                
-            case PSA_IPC_DISCONNECT:
-                psa_reply(msg.handle, PSA_SUCCESS);
-                break;
-                
-            default:
-                psa_reply(msg.handle, PSA_ERROR_NOT_SUPPORTED);
-                break;
-        }
-    }
-}
+PSA API functions return a `psa_status_t` type. `PSA_SUCCESS` (which is 0) indicates success. Any other value indicates an error. Common error codes include:
 
-static void handle_echo_call(psa_msg_t* msg)
-{
-    uint8_t echo_buffer[ECHO_MAX_SIZE];
-    size_t bytes_read;
-    
-    /* Read input data */
-    if (msg->in_size[0] > 0 && msg->in_size[0] <= ECHO_MAX_SIZE) {
-        bytes_read = psa_read(msg->handle, 0, echo_buffer, msg->in_size[0]);
-        
-        /* Echo data back if output buffer available */
-        if (msg->out_size[0] > 0) {
-            size_t bytes_to_write = MIN(bytes_read, msg->out_size[0]);
-            psa_write(msg->handle, 0, echo_buffer, bytes_to_write);
-        }
-        
-        psa_reply(msg->handle, PSA_SUCCESS);
-    } else {
-        psa_reply(msg->handle, PSA_ERROR_INVALID_ARGUMENT);
-    }
-}
-```
+*   `PSA_ERROR_INVALID_ARGUMENT`: An invalid argument was passed to the function.
+*   `PSA_ERROR_NOT_SUPPORTED`: The requested algorithm or operation is not supported.
+*   `PSA_ERROR_INSUFFICIENT_MEMORY`: Not enough memory to complete the operation.
+*   `PSA_ERROR_INSUFFICIENT_STORAGE`: Not enough storage space (for PS/ITS).
+*   `PSA_ERROR_COMMUNICATION_FAILURE`: Error in communication with the secure service.
+*   `PSA_ERROR_STORAGE_FAILURE`: Underlying storage mechanism failed.
+*   `PSA_ERROR_CORRUPTION_DETECTED`: Data corruption detected.
+*   `PSA_ERROR_BAD_STATE`: The operation is not permitted in the current state.
+*   `PSA_ERROR_BUFFER_TOO_SMALL`: The output buffer provided is too small.
+*   `PSA_ERROR_INVALID_SIGNATURE`: Signature verification failed.
+*   `PSA_ERROR_INVALID_PADDING`: Padding validation failed during decryption.
 
-## Error Handling
+It is crucial to check the return status of every PSA API call and handle errors appropriately.
 
-### PSA Status Codes
-```c
-/* Common PSA status codes */
-#define PSA_SUCCESS                     0
-#define PSA_ERROR_GENERIC_ERROR         -132
-#define PSA_ERROR_NOT_SUPPORTED         -134
-#define PSA_ERROR_INVALID_ARGUMENT      -135
-#define PSA_ERROR_INVALID_HANDLE        -136
-#define PSA_ERROR_BAD_STATE             -137
-#define PSA_ERROR_BUFFER_TOO_SMALL      -138
-#define PSA_ERROR_COMMUNICATION_FAILURE -145
-#define PSA_ERROR_CONNECTION_REFUSED    -150
-#define PSA_ERROR_CONNECTION_BUSY       -151
-```
+## 5. Best Practices
 
-### Error Handling Patterns
-```c
-tfm_service_status_t robust_service_call(void)
-{
-    psa_handle_t handle;
-    psa_status_t status;
-    int retry_count = 0;
-    const int max_retries = 3;
-    
-    /* Retry loop for transient errors */
-    while (retry_count < max_retries) {
-        /* Connect to service */
-        handle = psa_connect(SERVICE_SID, 1);
-        if (handle <= 0) {
-            if (handle == PSA_ERROR_CONNECTION_BUSY && retry_count < max_retries - 1) {
-                /* Retry on busy */
-                retry_count++;
-                continue;
-            }
-            return SERVICE_ERROR_CONNECTION_FAILED;
-        }
-        
-        /* Call service */
-        status = psa_call(handle, OPERATION_TYPE, NULL, 0, NULL, 0);
-        
-        /* Close connection */
-        psa_close(handle);
-        
-        /* Handle status */
-        switch (status) {
-            case PSA_SUCCESS:
-                return SERVICE_SUCCESS;
-                
-            case PSA_ERROR_COMMUNICATION_FAILURE:
-                /* Retry communication failures */
-                if (retry_count < max_retries - 1) {
-                    retry_count++;
-                    continue;
-                }
-                return SERVICE_ERROR_COMMUNICATION;
-                
-            case PSA_ERROR_INVALID_ARGUMENT:
-                /* Don't retry invalid arguments */
-                return SERVICE_ERROR_INVALID_PARAM;
-                
-            case PSA_ERROR_NOT_SUPPORTED:
-                return SERVICE_ERROR_NOT_SUPPORTED;
-                
-            default:
-                return SERVICE_ERROR_GENERIC;
-        }
-    }
-    
-    return SERVICE_ERROR_MAX_RETRIES_EXCEEDED;
-}
-```
+*   **Minimize Key Exposure:** Handle key material carefully. Use key IDs (`psa_key_id_t`) instead of raw key bytes whenever possible in the application.
+*   **Clear Sensitive Data:** Securely clear buffers containing keys or sensitive plaintext after use (e.g., using `memset_s` or equivalent).
+*   **Use Appropriate Key Attributes:** Define key attributes (`psa_key_attributes_t`) precisely, specifying usage flags, algorithm, key type, and size to enforce security policies.
+*   **Check Return Values:** Always check the return status of PSA API calls.
+*   **Resource Management:** Properly initialize and release PSA operations (e.g., `psa_cipher_operation_t`, `psa_hash_operation_t`) using `_INIT` macros and `_abort()` functions in case of errors or completion. Destroy keys using `psa_destroy_key()` when no longer needed.
+*   **Understand Security Implications:** Be aware of the security properties of different algorithms and modes (e.g., using authenticated encryption like AES-GCM or AES-CCM over unauthenticated modes if both confidentiality and integrity are required).
 
-## Best Practices
+## 6. Further Reading
 
-### Client-Side Best Practices
+*   **PSA Functional API Specifications:** The official Arm PSA specifications provide the most detailed information.
+    *   [PSA Cryptography API](https://developer.arm.com/documentation/ihi0086/latest/)
+    *   [PSA Protected Storage API](https://developer.arm.com/documentation/ihi0087/latest/)
+    *   [PSA Initial Attestation API](https://developer.arm.com/documentation/ihi0085/latest/)
+*   **TF-M Documentation:** The Trusted Firmware-M documentation explains how these APIs are implemented and integrated.
 
-#### 1. Resource Management
-```c
-/* Always close connections */
-psa_handle_t handle = psa_connect(SERVICE_SID, 1);
-if (handle > 0) {
-    /* ... use service ... */
-    psa_close(handle);  /* Always close */
-}
-
-/* Check return values */
-psa_status_t status = psa_call(handle, op, in_vec, 1, out_vec, 1);
-if (status != PSA_SUCCESS) {
-    /* Handle error appropriately */
-}
-```
-
-#### 2. Buffer Management
-```c
-/* Validate buffer sizes */
-if (input_size > MAX_SERVICE_INPUT) {
-    return SERVICE_ERROR_BUFFER_TOO_LARGE;
-}
-
-/* Use appropriate buffer sizes */
-uint8_t buffer[SERVICE_MAX_BUFFER_SIZE];
-psa_outvec out_vec[] = {{.base = buffer, .len = sizeof(buffer)}};
-```
-
-#### 3. Error Recovery
-```c
-/* Implement retry logic for transient errors */
-/* Validate inputs before making PSA calls */
-/* Provide meaningful error messages to callers */
-```
-
-### Service-Side Best Practices
-
-#### 1. Input Validation
-```c
-static psa_status_t handle_operation(psa_msg_t* msg)
-{
-    /* Validate input sizes */
-    if (msg->in_size[0] > MAX_ALLOWED_INPUT) {
-        return PSA_ERROR_INVALID_ARGUMENT;
-    }
-    
-    /* Validate client permissions */
-    if (msg->client_id < 0 && !service_allows_secure_clients) {
-        return PSA_ERROR_CONNECTION_REFUSED;
-    }
-    
-    /* ... process request ... */
-}
-```
-
-#### 2. Resource Management
-```c
-/* Use static allocation in secure partitions */
-static uint8_t service_buffer[SERVICE_BUFFER_SIZE];
-
-/* Clean up resources on disconnect */
-static void handle_disconnect(psa_msg_t* msg)
-{
-    cleanup_client_resources(msg->client_id);
-    psa_reply(msg->handle, PSA_SUCCESS);
-}
-```
-
-#### 3. Security Considerations
-```c
-/* Clear sensitive data after use */
-memset(sensitive_buffer, 0, sizeof(sensitive_buffer));
-
-/* Validate data integrity */
-if (!validate_input_integrity(input_data, input_size)) {
-    return PSA_ERROR_INVALID_ARGUMENT;
-}
-
-/* Fail securely */
-if (security_violation_detected) {
-    /* Log security event */
-    /* Return generic error */
-    return PSA_ERROR_GENERIC_ERROR;
-}
-```
-
-## Performance Optimization
-
-### Minimize Context Switches
-```c
-/* BAD: Multiple separate calls */
-status1 = call_service_operation_1();
-status2 = call_service_operation_2();
-status3 = call_service_operation_3();
-
-/* GOOD: Batch operations */
-status = call_service_batch_operations(op1_data, op2_data, op3_data);
-```
-
-### Efficient Data Transfer
-```c
-/* Use multiple vectors for complex data */
-psa_invec input_vec[] = {
-    {.base = header, .len = sizeof(header)},
-    {.base = payload, .len = payload_size}
-};
-
-/* Avoid unnecessary data copying */
-/* Use shared buffers for large transfers when possible */
-```
-
-### Connection Reuse
-```c
-/* For multiple operations, consider keeping connection open */
-handle = psa_connect(SERVICE_SID, 1);
-for (int i = 0; i < num_operations; i++) {
-    status = psa_call(handle, operations[i], ...);
-    /* ... handle status ... */
-}
-psa_close(handle);
-```
-
-## Next Steps
-
-- **[Secure Partitions Guide](./secure-partitions.md)**: Implement secure services
-- **[TinyMaix Integration](./tinymaix-integration.md)**: ML-specific PSA usage
-- **[Testing Framework](./testing-framework.md)**: Test PSA client-service pairs
+This guide provides a project-specific overview. For comprehensive details, always refer to the official PSA and TF-M documentation.
