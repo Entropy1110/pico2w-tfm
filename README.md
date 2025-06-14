@@ -32,8 +32,8 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm
 # 첫 번째 단계: DEV_MODE로 빌드하여 HUK 파생 키 추출
 ./build.sh DEV_MODE
 
-# 시리얼 출력에서 "HUK-derived key:" 줄을 찾아 16진수 키를 복사
-# 예: HUK-derived key: 40c962d66a1fa40346cac8b7e612741e
+# 시리얼 출력에서 "✓ Key (hex):" 줄을 찾아 16진수 키를 복사
+# 예: ✓ Key (hex): 40c962d66a1fa40346cac8b7e612741e
 
 # 추출한 키를 바이너리 파일로 저장 (16진수 → 바이너리 변환)
 echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
@@ -256,8 +256,8 @@ First, extract HUK-derived keys in DEV_MODE, then use them for model encryption:
 # Step 1: Build in DEV_MODE to extract HUK-derived keys
 ./build.sh DEV_MODE
 
-# Step 2: Find "HUK-derived key:" in serial output and copy the hex key
-# Example: HUK-derived key: 40c962d66a1fa40346cac8b7e612741e
+# Step 2: Find "✓ Key (hex):" in serial output and copy the hex key
+# Example: ✓ Key (hex): 40c962d66a1fa40346cac8b7e612741e
 
 # Step 3: Convert hex to binary using xxd
 echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
