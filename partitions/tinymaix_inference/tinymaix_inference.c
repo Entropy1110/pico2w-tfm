@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include "tm_port.h"
 #include "tinymaix.h"
+#include "tfm_builtin_key_ids.h"
 #include "../../models/encrypted_mnist_model_psa.h"  /* Changed to match PSA encrypted model header */
 
 /* Maximum model size */
@@ -23,6 +24,9 @@
 #define TINYMAIX_IPC_LOAD_MODEL          (0x1001U)  /* Using built-in encrypted model */
 #define TINYMAIX_IPC_LOAD_ENCRYPTED_MODEL (0x1002U)  /* For future custom encrypted models */
 #define TINYMAIX_IPC_RUN_INFERENCE       (0x1003U)
+#ifdef DEV_MODE
+#define TINYMAIX_IPC_GET_MODEL_KEY       (0x1004U)  /* Get HUK-derived model key for debugging */
+#endif
 
 /* Encrypted TinyMAIX model header structure for CBC */
 typedef struct {
@@ -54,10 +58,8 @@ static uint8_t g_decrypted_model[TFM_TINYMAIX_MAX_MODEL_SIZE];
 static size_t g_decrypted_size = 0;
 
 /* AES-128 encryption key (16 bytes) - PSA crypto test key */
-static const uint8_t encryption_key[16] = {
-    0x40, 0xc9, 0x62, 0xd6, 0x6a, 0x1f, 0xa4, 0x03,
-    0x46, 0xca, 0xc8, 0xb7, 0xe6, 0x12, 0x74, 0xe1
-};
+#define DERIVED_KEY_LEN 16    // 128-bit
+static uint8_t encryption_key[DERIVED_KEY_LEN];
 
 /* MNIST test image - digit "2" */
 static uint8_t mnist_pic[28*28]={
@@ -91,6 +93,59 @@ static uint8_t mnist_pic[28*28]={
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 };
 
+
+static psa_status_t derive_key_from_huk(const char *label, uint8_t *derived, size_t derived_len)
+{
+    psa_status_t status;
+    psa_key_derivation_operation_t op = PSA_KEY_DERIVATION_OPERATION_INIT;
+    
+    /* Setup HKDF with SHA-256 as specified in TF-M builtin key design */
+    status = psa_key_derivation_setup(&op, PSA_ALG_HKDF(PSA_ALG_SHA_256));
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV("ERROR: psa_key_derivation_setup failed: %d\n", (int)status);
+        return status;
+    }
+    
+    /* Provide salt input (empty salt for consistency) */
+    status = psa_key_derivation_input_bytes(&op, PSA_KEY_DERIVATION_INPUT_SALT,
+                                            NULL, 0);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV("ERROR: psa_key_derivation_input_salt failed: %d\n", (int)status);
+        psa_key_derivation_abort(&op);
+        return status;
+    }
+    
+    /* Use HUK as secret input for key derivation */
+    status = psa_key_derivation_input_key(&op, PSA_KEY_DERIVATION_INPUT_SECRET,
+                                          TFM_BUILTIN_KEY_ID_HUK);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV("ERROR: psa_key_derivation_input_key failed: %d\n", (int)status);
+        psa_key_derivation_abort(&op);
+        return status;
+    }
+    
+    /* Provide derivation context label as info input */
+    status = psa_key_derivation_input_bytes(&op, PSA_KEY_DERIVATION_INPUT_INFO,
+                                            (const uint8_t*)label, strlen(label));
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV("ERROR: psa_key_derivation_input_bytes failed: %d\n", (int)status);
+        psa_key_derivation_abort(&op);
+        return status;
+    }
+    
+    /* Derive the output key material */
+    status = psa_key_derivation_output_bytes(&op, derived, derived_len);
+    if (status != PSA_SUCCESS) {
+        INFO_UNPRIV("ERROR: psa_key_derivation_output_bytes failed: %d\n", (int)status);
+        psa_key_derivation_abort(&op);
+        return status;
+    }
+    
+    /* Clean up the derivation operation */
+    psa_key_derivation_abort(&op);
+    return PSA_SUCCESS;
+}
+
 /* Layer callback function */
 static tm_err_t layer_cb(tm_mdl_t* mdl, tml_head_t* lh)
 {
@@ -114,9 +169,9 @@ static int parse_output(tm_mat_t* outs)
     return maxi;
 }
 
-static psa_status_t decrypt_model_to_global(const uint8_t* encrypted_data, size_t encrypted_size)
+static psa_status_t decrypt_model(const uint8_t* encrypted_data, size_t encrypted_size)
 {
-    INFO_UNPRIV("=== PSA CBC DECRYPTION WITH MANUAL PADDING REMOVAL ===\n");
+    INFO_UNPRIV("=== PSA CBC DECRYPTION WITH MANUAL PKCS7 PADDING ===\n");
     
     /* Basic validation */
     if (!encrypted_data) {
@@ -169,7 +224,7 @@ static psa_status_t decrypt_model_to_global(const uint8_t* encrypted_data, size_
     psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_id_t key_id = 0;
     
-    /* Use basic CBC mode, handle padding manually */
+    /* Use CBC without padding - we'll handle PKCS7 padding manually */
     psa_algorithm_t cbc_alg = PSA_ALG_CBC_NO_PADDING;
     
     psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_DECRYPT);
@@ -177,7 +232,14 @@ static psa_status_t decrypt_model_to_global(const uint8_t* encrypted_data, size_
     psa_set_key_type(&attributes, PSA_KEY_TYPE_AES);
     psa_set_key_bits(&attributes, 128);
     
-    INFO_UNPRIV("Using CBC with manual padding, algorithm: 0x%08x\n", cbc_alg);
+    INFO_UNPRIV("Using CBC without padding (manual PKCS7 handling), algorithm: 0x%08x\n", cbc_alg);
+
+    // Derive key from HUK using PSA key derivation
+    const char *huk_label = "pico2w-tinymaix-model-aes128-v1.0";
+    if(derive_key_from_huk(huk_label, encryption_key, sizeof(encryption_key)) != PSA_SUCCESS) {
+        INFO_UNPRIV("Key derivation failed\n");
+        return PSA_ERROR_GENERIC_ERROR;
+    }
     
     psa_status_t status = psa_import_key(&attributes, encryption_key, 16, &key_id);
     if (status != PSA_SUCCESS) {
@@ -226,27 +288,35 @@ static psa_status_t decrypt_model_to_global(const uint8_t* encrypted_data, size_
         return status;
     }
     
-    INFO_UNPRIV("Raw decryption successful: %d bytes\n", output_length);
+    INFO_UNPRIV("Raw decryption successful: %d bytes (including PKCS7 padding)\n", output_length);
     
     /* Manual PKCS7 padding removal */
     if (output_length == 0) {
-        INFO_UNPRIV("No decrypted data!\n");
+        INFO_UNPRIV("No decrypted data\n");
         return PSA_ERROR_GENERIC_ERROR;
     }
     
+    /* Get padding length from last byte */
     uint8_t padding_length = g_decrypted_model[output_length - 1];
-    INFO_UNPRIV("PKCS7 padding length: %d\n", padding_length);
+    INFO_UNPRIV("PKCS7 padding length: %d bytes\n", padding_length);
     
-    if (padding_length == 0 || padding_length > 16 || padding_length > output_length) {
-        INFO_UNPRIV("Invalid padding length: %d\n", padding_length);
-        return PSA_ERROR_INVALID_PADDING;
+    /* Validate padding length */
+    if (padding_length == 0 || padding_length > 16) {
+        INFO_UNPRIV("Invalid PKCS7 padding length: %d\n", padding_length);
+        return PSA_ERROR_GENERIC_ERROR;
     }
     
-    /* Verify padding bytes */
+    if (padding_length > output_length) {
+        INFO_UNPRIV("Padding length (%d) exceeds data length (%d)\n", padding_length, output_length);
+        return PSA_ERROR_GENERIC_ERROR;
+    }
+    
+    /* Validate all padding bytes are correct */
     for (int i = 0; i < padding_length; i++) {
         if (g_decrypted_model[output_length - 1 - i] != padding_length) {
-            INFO_UNPRIV("Invalid padding at offset %d\n", i);
-            return PSA_ERROR_INVALID_PADDING;
+            INFO_UNPRIV("Invalid PKCS7 padding byte at position %d: got %d, expected %d\n", 
+                       output_length - 1 - i, g_decrypted_model[output_length - 1 - i], padding_length);
+            return PSA_ERROR_GENERIC_ERROR;
         }
     }
     
@@ -254,7 +324,7 @@ static psa_status_t decrypt_model_to_global(const uint8_t* encrypted_data, size_
     g_decrypted_size = output_length - padding_length;
     
     INFO_UNPRIV("=== CBC DECRYPTION SUCCESS ===\n");
-    INFO_UNPRIV("Decrypted %d bytes (after removing %d padding bytes)\n", g_decrypted_size, padding_length);
+    INFO_UNPRIV("Decrypted %d bytes (manually removed %d bytes PKCS7 padding)\n", g_decrypted_size, padding_length);
     INFO_UNPRIV("Expected size: %d bytes\n", header->original_size);
     
     /* Verify size matches expected */
@@ -331,7 +401,7 @@ void tinymaix_inference_entry(void)
                     INFO_UNPRIV("Builtin model too large: %d > %d\n", encrypted_mdl_data_size, TFM_TINYMAIX_MAX_MODEL_SIZE);
                     status = PSA_ERROR_INSUFFICIENT_MEMORY;
                 } else {
-                    status = decrypt_model_to_global(encrypted_mdl_data_data, encrypted_mdl_data_size);
+                    status = decrypt_model(encrypted_mdl_data_data, encrypted_mdl_data_size);
                 }
                 
                 if (status == PSA_SUCCESS) {
@@ -376,7 +446,6 @@ void tinymaix_inference_entry(void)
                     uint32_t success_result = 0;
                     psa_write(msg.handle, 0, &success_result, sizeof(success_result));
                 }
-                
                 psa_reply(msg.handle, status);
                 break;
                 
@@ -487,6 +556,40 @@ void tinymaix_inference_entry(void)
                 
                 psa_reply(msg.handle, status);
                 break;
+
+#ifdef DEV_MODE
+            case TINYMAIX_IPC_GET_MODEL_KEY:
+                /* Get HUK-derived model key for debugging */
+                INFO_UNPRIV("=== TINYMAIX_IPC_GET_MODEL_KEY called (DEV_MODE) ===\n");
+                
+                if (msg.out_size[0] < DERIVED_KEY_LEN) {
+                    INFO_UNPRIV("ERROR: Output buffer too small for model key\n");
+                    status = PSA_ERROR_BUFFER_TOO_SMALL;
+                } else {
+                    /* Derive key from HUK using same label as decrypt_model */
+                    const char *huk_label = "pico2w-tinymaix-model-aes128-v1.0";
+                    uint8_t derived_key[DERIVED_KEY_LEN];
+                    
+                    status = derive_key_from_huk(huk_label, derived_key, sizeof(derived_key));
+                    if (status == PSA_SUCCESS) {
+                        /* Write the derived key to output */
+                        psa_write(msg.handle, 0, derived_key, DERIVED_KEY_LEN);
+                        INFO_UNPRIV("HUK-derived key returned successfully\n");
+                        
+                        /* Log the key for debugging */
+                        INFO_UNPRIV("Derived key: ");
+                        for(int i = 0; i < DERIVED_KEY_LEN; i++) {
+                            INFO_UNPRIV("%02x", derived_key[i]);
+                        }
+                        INFO_UNPRIV("\n");
+                    } else {
+                        INFO_UNPRIV("ERROR: Key derivation failed: %d\n", status);
+                    }
+                }
+                
+                psa_reply(msg.handle, status);
+                break;
+#endif
                 
             case PSA_IPC_DISCONNECT:
                 /* Client disconnected */

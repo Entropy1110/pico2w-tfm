@@ -65,4 +65,5 @@ target_link_libraries(tfm_partitions
 target_compile_definitions(tfm_app_rot_partition_tinymaix_inference
     PRIVATE
         TFM_PARTITION_TINYMAIX_INFERENCE
+        $<$<BOOL:${DEV_MODE}>:DEV_MODE>
 )

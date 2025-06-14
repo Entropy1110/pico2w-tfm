@@ -8,9 +8,19 @@ set -e
 PROJECT_ROOT=$(dirname "$(realpath "$0")")
 BUILD_DIR="${PROJECT_ROOT}/build"
 
-echo "========================================"
-echo "TF-M Provision Application Build"
-echo "========================================"
+# Check for DEV_MODE argument
+DEV_MODE_OPT=""
+if [[ "$*" == *"DEV_MODE"* ]]; then
+    DEV_MODE_OPT="-DDEV_MODE=ON"
+    echo "========================================"
+    echo "TF-M Provision Application Build (DEV_MODE)"
+    echo "========================================"
+    echo "DEV_MODE enabled - HUK key derivation debug features available"
+else
+    echo "========================================"
+    echo "TF-M Provision Application Build"
+    echo "========================================"
+fi
 
 # Clean previous build artifacts
 echo "Cleaning previous build directories..."
@@ -58,7 +68,8 @@ cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
   -DTFM_NS_REG_TEST=OFF \
   -DTFM_S_REG_TEST=OFF \
   -DTFM_PARTITION_ECHO_SERVICE=ON \
-  -DTFM_PARTITION_TINYMAIX_INFERENCE=ON
+  -DTFM_PARTITION_TINYMAIX_INFERENCE=ON \
+  ${DEV_MODE_OPT}
 
 echo ""
 echo "Installing SPE build artifacts..."
@@ -72,7 +83,8 @@ cmake -S ./tflm_ns -B "${BUILD_DIR}/nspe" \
     -DTFM_PLATFORM=rpi/rp2350 \
     -DPICO_BOARD=pico2_w \
     -DCONFIG_SPE_PATH="${BUILD_DIR}/spe/api_ns" \
-    -DTFM_TOOLCHAIN_FILE="${BUILD_DIR}/spe/api_ns/cmake/toolchain_ns_GNUARM.cmake"
+    -DTFM_TOOLCHAIN_FILE="${BUILD_DIR}/spe/api_ns/cmake/toolchain_ns_GNUARM.cmake" \
+    ${DEV_MODE_OPT}
 
 cmake --build "${BUILD_DIR}/nspe" -- -j8
 

@@ -207,4 +207,5 @@ target_compile_definitions(tfm_tflm_broker
     PUBLIC
         TFM_NS_LOG
         $<$<BOOL:${TFM_NS_MAILBOX_API}>:TFM_NS_MAILBOX_API>
+        $<$<BOOL:${DEV_MODE}>:DEV_MODE>
 )

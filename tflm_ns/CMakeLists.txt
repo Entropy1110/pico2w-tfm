@@ -53,6 +53,7 @@ target_compile_definitions(tfm_ns
     PUBLIC
         # Force TFM_NS_LOG to be always enabled for tflm apps
         TFM_NS_LOG
+        $<$<BOOL:${DEV_MODE}>:DEV_MODE>
 )
 
 set_target_properties(tfm_ns PROPERTIES

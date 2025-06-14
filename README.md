@@ -38,6 +38,17 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm
 ./build.sh clean
 ```
 
+#### 3. 개발 모드 빌드 (DEV_MODE)
+
+```bash
+./build.sh DEV_MODE
+```
+
+개발 모드에서는 다음 디버그 기능이 활성화됩니다:
+- **HUK 파생 키 출력**: `tfm_tinymaix_get_model_key()` 함수를 통해 HUK에서 파생된 모델 암호화 키를 출력
+- **추가 로깅**: 키 파생 과정에 대한 상세한 디버그 정보
+- **보안 주의**: 프로덕션 환경에서는 절대 사용하지 마세요!
+
 ### 아키텍처
 
 #### 디렉터리 구조
@@ -56,7 +67,7 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm
 ### 모델 관리
 
 #### 모델 암호화
-모델은 보안 배포를 위해 AES-256-CBC로 암호화됩니다. `./build.sh` 실행 시 자동으로 `models/model_key_psa.bin` 키를 사용하여 암호화됩니다.
+모델은 보안 배포를 위해 AES-128-CBC로 암호화됩니다. `./build.sh` 실행 시 자동으로 HUK(Hardware Unique Key) 파생 키를 사용하여 암호화됩니다.
 
 **수동 암호화 방법:**
 ```bash
@@ -174,6 +185,17 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm
 ./build.sh clean
 ```
 
+#### 3. Development Mode Build (DEV_MODE)
+
+```bash
+./build.sh DEV_MODE
+```
+
+Development mode enables the following debug features:
+- **HUK-derived Key Output**: Output model encryption key derived from HUK via `tfm_tinymaix_get_model_key()` function
+- **Additional Logging**: Detailed debug information about key derivation process
+- **Security Warning**: Never use in production environments!
+
 ### Architecture
 
 #### Directory Structure
@@ -192,10 +214,13 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm
 ### Model Management
 
 #### Model Encryption
-Models are encrypted using AES-256-CBC for secure deployment. The `./build.sh` script automatically encrypts models using the key at `models/model_key_psa.bin`.
+Models are encrypted using AES-128-CBC for secure deployment. The `./build.sh` script automatically encrypts models using HUK (Hardware Unique Key) derived keys.
 
 **Manual encryption methods:**
 ```bash
+# Use HUK-derived key (recommended, same as TF-M Secure Partition)
+python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --use-huk-key --generate-c-header
+
 # Use existing key file
 python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --key-file models/model_key_psa.bin --generate-c-header
 

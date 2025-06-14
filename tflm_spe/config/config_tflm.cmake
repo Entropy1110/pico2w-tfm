@@ -31,6 +31,9 @@ set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL      "Enable Plat
 set(TFM_PARTITION_ECHO_SERVICE           ON          CACHE BOOL      "Enable Echo Service partition")
 set(TFM_PARTITION_TINYMAIX_INFERENCE    ON          CACHE BOOL      "Enable TinyMaix Inference partition")
 
+# Development mode option for debug features
+set(DEV_MODE                            OFF         CACHE BOOL      "Enable development mode with debug features")
+
 # Crypto modules will be automatically enabled based on TFM_CRYPTO dependency in manifest
 # No need to manually configure them
 

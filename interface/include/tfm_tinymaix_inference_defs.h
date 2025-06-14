@@ -14,6 +14,9 @@ extern "C" {
 
 #define TINYMAIX_IPC_LOAD_ENCRYPTED_MODEL (0x1002U)
 #define TINYMAIX_IPC_RUN_INFERENCE       (0x1003U)
+#ifdef DEV_MODE
+#define TINYMAIX_IPC_GET_MODEL_KEY       (0x1004U)
+#endif
 
 /* TinyMaix status codes */
 typedef enum {
@@ -30,6 +33,11 @@ tfm_tinymaix_status_t tfm_tinymaix_run_inference(int* predicted_class);
 
 /* TODO : Add function to run inference with custom image data */
 tfm_tinymaix_status_t tfm_tinymaix_run_inference_with_data(const uint8_t* image_data, size_t image_size, int* predicted_class);
+
+#ifdef DEV_MODE
+/* Debug function to get HUK-derived model key (DEV_MODE only) */
+tfm_tinymaix_status_t tfm_tinymaix_get_model_key(uint8_t* key_buffer, size_t key_buffer_size);
+#endif
 
 #ifdef __cplusplus
 }
