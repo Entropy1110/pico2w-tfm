@@ -5,18 +5,18 @@
 #
 #-------------------------------------------------------------------------------
 
-# TFLM application flag parsing - simplified version for non-test applications
-# This ensures all test flags are disabled for TFLM applications
+# TINYML application flag parsing - simplified version for non-test applications
+# This ensures all test flags are disabled for TINYML applications
 #
 # cmd_line: the output argument to collect the arguments via command line
 #
-function(parse_tflm_flag cmd_line)
+function(parse_tinyml_flag cmd_line)
 
-    # Force all regression tests to be disabled for TFLM applications
+    # Force all regression tests to be disabled for TINYML applications
     set(TFM_NS_REG_TEST OFF)
     set(TFM_S_REG_TEST  OFF)
     
-    # Enable required partitions for TFLM applications
+    # Enable required partitions for TINYML applications
     set(TFM_PARTITION_PROTECTED_STORAGE OFF)
     set(TFM_PARTITION_INTERNAL_TRUSTED_STORAGE ON)
     set(TFM_PARTITION_CRYPTO ON)

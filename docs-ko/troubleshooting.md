@@ -17,7 +17,7 @@ CMake Error: rpi/rp2350에 대한 플랫폼 정의를 찾을 수 없음
 ls pico2w-trusted-firmware-m/platform/ext/target/rpi/rp2350
 
 # 빌드 명령 검증
-cmake -S ./tflm_spe -B build/spe -DTFM_PLATFORM=rpi/rp2350 ...
+cmake -S ./spe -B build/spe -DTFM_PLATFORM=rpi/rp2350 ...
 ```
 
 **오류: 매니페스트 검증 실패**
@@ -614,12 +614,12 @@ rm -rf build/
 
 # SPE만 재빌드
 rm -rf build/spe
-cmake -S ./tflm_spe -B build/spe ...
+cmake -S ./spe -B build/spe ...
 cmake --build build/spe -- -j8 install
 
 # NSPE만 재빌드
 rm -rf build/nspe  
-cmake -S ./tflm_ns -B build/nspe ...
+cmake -S ./nspe -B build/nspe ...
 cmake --build build/nspe -- -j8
 ```
 

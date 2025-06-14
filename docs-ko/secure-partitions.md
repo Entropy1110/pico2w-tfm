@@ -635,7 +635,7 @@ target_compile_definitions(tfm_app_rot_partition_my_custom_service
 
 ### 6단계: 빌드 시스템에 추가
 ```cmake
-# tflm_spe/config/config_tflm.cmake에 추가
+# spe/config/config_tflm.cmake에 추가
 set(TFM_PARTITION_MY_CUSTOM_SERVICE  ON  CACHE BOOL  "Enable My Custom Service")
 ```
 

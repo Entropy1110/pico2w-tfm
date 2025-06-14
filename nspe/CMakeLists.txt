@@ -35,7 +35,7 @@ add_executable(tfm_ns)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../lib/ext ${CMAKE_BINARY_DIR}/lib/ext)
 add_subdirectory(../app_broker ${CMAKE_BINARY_DIR}/app_broker)
 
-############################# TFM NS tflm app ##################################
+############################# TFM NS tinyml app ##################################
 
 target_sources(tfm_ns
     PRIVATE
@@ -45,13 +45,13 @@ target_sources(tfm_ns
 target_link_libraries(tfm_ns
     PRIVATE
         os_wrapper
-        tfm_tflm_broker
+        tfm_tinyml_broker
         tfm_api_ns
 )
 
 target_compile_definitions(tfm_ns
     PUBLIC
-        # Force TFM_NS_LOG to be always enabled for tflm apps
+        # Force TFM_NS_LOG to be always enabled for tinyml apps
         TFM_NS_LOG
         $<$<BOOL:${DEV_MODE}>:DEV_MODE>
 )

@@ -9,10 +9,10 @@
 #define MBEDTLS_EXTRA_CONFIG_H
 
 /*
- * Extra configuration options for MbedTLS to optimize for TFLM application with PSA encryption
+ * Extra configuration options for MbedTLS to optimize for tinyml application with PSA encryption
  */
 
-/* Disable unnecessary features for TFLM apps */
+/* Disable unnecessary features for tinyml apps */
 #undef MBEDTLS_SSL_TLS_C
 #undef MBEDTLS_SSL_CLI_C  
 #undef MBEDTLS_SSL_SRV_C

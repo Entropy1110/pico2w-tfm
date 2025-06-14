@@ -8,7 +8,7 @@
 
 ### 테스트 구조
 ```
-tflm_ns/
+nspe/
 ├── test_runner.c              # 메인 테스트 관리자
 ├── echo_test_app.c            # Echo 서비스 테스트
 ├── psa_crypto_test.c          # PSA 암호화 API 테스트  
@@ -433,7 +433,7 @@ void test_my_new_feature(void);
 target_sources(tfm_tflm_broker
     PRIVATE
         # ... 기존 소스들 ...
-        ../tflm_ns/my_new_feature_test.c
+        ../nspe/my_new_feature_test.c
 )
 ```
 

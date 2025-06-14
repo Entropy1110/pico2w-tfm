@@ -816,7 +816,7 @@ const size_t encrypted_mnist_model_psa_size = sizeof(encrypted_mnist_model_psa_d
 
 ### 기본 추론 테스트
 ```c
-// tflm_ns/tinymaix_inference_test.c
+// nspe/tinymaix_inference_test.c
 void test_tinymaix_basic_functionality(void)
 {
     printf("[TinyMaix Test] Testing encrypted model functionality...\\n");

@@ -1,14 +1,14 @@
-# PSA API Guide for pico2w-tfm-tflm
+# PSA API Guide for pico2w-tfm-tinyml
 
 ## 1. Introduction
 
-The Platform Security Architecture (PSA) provides a framework for designing and building secure embedded systems. Central to this is the PSA Functional API, which offers a standardized interface for accessing security services. In the `pico2w-tfm-tflm` project, these APIs are crucial for implementing secure functionalities, particularly those involving cryptographic operations, secure storage, and attestation, all managed within the Trusted Firmware-M (TF-M) environment.
+The Platform Security Architecture (PSA) provides a framework for designing and building secure embedded systems. Central to this is the PSA Functional API, which offers a standardized interface for accessing security services. In the `pico2w-tfm-tinyml` project, these APIs are crucial for implementing secure functionalities, particularly those involving cryptographic operations, secure storage, and attestation, all managed within the Trusted Firmware-M (TF-M) environment.
 
 This document outlines the key PSA APIs utilized in this project and provides guidance on their usage.
 
 ## 2. Core PSA APIs Utilized
 
-The `pico2w-tfm-tflm` project leverages several PSA Functional APIs provided by TF-M. These APIs enable secure operations by abstracting the underlying hardware and software security mechanisms.
+The `pico2w-tfm-tinyml` project leverages several PSA Functional APIs provided by TF-M. These APIs enable secure operations by abstracting the underlying hardware and software security mechanisms.
 
 ### 2.1. PSA Cryptography API
 
@@ -236,9 +236,9 @@ psa_status_t get_attestation_token(const uint8_t *challenge, size_t challenge_si
 }
 ```
 
-## 3. PSA API Usage in `pico2w-tfm-tflm`
+## 3. PSA API Usage in `pico2w-tfm-tinyml`
 
-In the `pico2w-tfm-tflm` project, PSA APIs are primarily used for:
+In the `pico2w-tfm-tinyml` project, PSA APIs are primarily used for:
 
 *   **Model Encryption/Decryption:** The `model-encryption.md` guide details how HUK (Hardware Unique Key) is used via PSA key derivation (`psa_key_derivation_setup`, `psa_key_derivation_input_key`, `psa_key_derivation_output_bytes`) to generate model-specific encryption keys. The actual decryption of TinyMaix models in the secure partition uses `psa_cipher_decrypt()` with AES-CBC.
 *   **Secure Storage of Keys/Credentials:** While not explicitly detailed in all examples, PSA Protected Storage could be used to store derived keys or other sensitive credentials if they need to persist across reboots.

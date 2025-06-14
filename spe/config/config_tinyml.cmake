@@ -43,7 +43,7 @@ set(TFM_EXTRA_PARTITION_PATHS           "${CMAKE_SOURCE_DIR}/../partitions" CACH
 
 ################################## Tests #######################################
 
-# All test-related configurations are disabled for TFLM
+# All test-related configurations are disabled for TINYML
 set(TFM_PARTITION_AUDIT_LOG             OFF         CACHE BOOL      "Enable Audit Log partition")
 set(TFM_PARTITION_FIRMWARE_UPDATE       OFF         CACHE BOOL      "Enable firmware update partition")
 set(TEST_S                              OFF         CACHE BOOL      "Whether to build S regression tests")
@@ -58,11 +58,11 @@ set(TFM_S_REG_TEST                      OFF         CACHE BOOL      "Enable S re
 set(TFM_MBEDCRYPTO_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/mbedtls_config.h CACHE PATH "Service side mbedtls config")
 # set(TFM_MBEDCRYPTO_CONFIG_CLIENT_PATH ${CONFIG_TFM_SOURCE_PATH}/lib/ext/mbedcrypto/mbedcrypto_config/tfm_mbedcrypto_config_client.h CACHE PATH "Client side mbedtls config") 
 # set(TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/mbedtls_extra_config.h CACHE PATH "Extra config for MbedTLS")
-set(TFM_MBEDCRYPTO_PSA_CRYPTO_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/config_tflm.h CACHE PATH "PSA crypto configuration file")
+set(TFM_MBEDCRYPTO_PSA_CRYPTO_CONFIG_PATH ${CMAKE_CURRENT_LIST_DIR}/config_tinyml.h CACHE PATH "PSA crypto configuration file")
 
 ################################## Compiler options #########################
 
-# BL2 (bootloader) is not necessary for TFLM apps
+# BL2 (bootloader) is not necessary for TINYML apps
 set(BL2                                 OFF         CACHE BOOL      "Whether to build BL2")
 set(MCUBOOT_IMAGE_NUMBER                1           CACHE STRING    "Number of images supported by MCUBoot")
 set(TFM_ISOLATION_LEVEL                 2           CACHE STRING    "Isolation level")

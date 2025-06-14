@@ -53,7 +53,7 @@ python3 tools/tinymaix_model_encryptor.py \
 
 #### SPE 빌드
 ```bash
-cmake -S ./tflm_spe -B build/spe \
+cmake -S ./spe -B build/spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -71,7 +71,7 @@ cmake --build build/spe -- -j8 install
 
 #### NSPE 빌드
 ```bash
-cmake -S ./tflm_ns -B build/nspe \
+cmake -S ./nspe -B build/nspe \
     -DTFM_PLATFORM=rpi/rp2350 \
     -DPICO_BOARD=pico2_w \
     -DCONFIG_SPE_PATH="build/spe/api_ns" \
@@ -89,7 +89,7 @@ picotool erase && picotool load build/spe/bin/bl2.uf2 && picotool load build/spe
 
 ## CMake 구성
 
-### SPE 구성: `tflm_spe/config/config_tflm.cmake`
+### SPE 구성: `spe/config/config_tflm.cmake`
 
 #### 플랫폼 설정
 ```cmake
@@ -115,7 +115,7 @@ set(TEST_S                              OFF         CACHE BOOL      "S 회귀 �
 set(TEST_NS                             OFF         CACHE BOOL      "NS 회귀 테스트 빌드 여부")
 ```
 
-### NSPE 구성: `tflm_ns/CMakeLists.txt`
+### NSPE 구성: `nspe/CMakeLists.txt`
 
 #### 의존성
 ```cmake
@@ -220,7 +220,7 @@ tfm_tinymaix_status_t tfm_tinymaix_get_model_key(uint8_t* key_buffer, size_t key
 mkdir -p build/spe
 cd build/spe
 
-cmake ../../tflm_spe \
+cmake ../../spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -236,7 +236,7 @@ make -j8 install
 mkdir -p build/nspe
 cd build/nspe
 
-cmake ../../tflm_ns \
+cmake ../../nspe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DCONFIG_SPE_PATH=../spe/api_ns \

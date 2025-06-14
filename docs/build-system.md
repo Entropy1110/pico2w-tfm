@@ -53,7 +53,7 @@ python3 tools/tinymaix_model_encryptor.py \
 
 #### SPE Build
 ```bash
-cmake -S ./tflm_spe -B build/spe \
+cmake -S ./spe -B build/spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -71,7 +71,7 @@ cmake --build build/spe -- -j8 install
 
 #### NSPE Build
 ```bash
-cmake -S ./tflm_ns -B build/nspe \
+cmake -S ./nspe -B build/nspe \
     -DTFM_PLATFORM=rpi/rp2350 \
     -DPICO_BOARD=pico2_w \
     -DCONFIG_SPE_PATH="build/spe/api_ns" \
@@ -89,7 +89,7 @@ picotool erase && picotool load build/spe/bin/bl2.uf2 && picotool load build/spe
 
 ## CMake Configuration
 
-### SPE Configuration: `tflm_spe/config/config_tflm.cmake`
+### SPE Configuration: `spe/config/config_tinyml.cmake`
 
 #### Platform Settings
 ```cmake
@@ -109,13 +109,13 @@ set(DEV_MODE                            OFF         CACHE BOOL      "Enable deve
 
 #### Test Configuration
 ```cmake
-# All test-related configurations are disabled for TFLM
+# All test-related configurations are disabled for tinyml
 set(TFM_PARTITION_AUDIT_LOG             OFF         CACHE BOOL      "Enable Audit Log partition")
 set(TEST_S                              OFF         CACHE BOOL      "Whether to build S regression tests")
 set(TEST_NS                             OFF         CACHE BOOL      "Whether to build NS regression tests")
 ```
 
-### NSPE Configuration: `tflm_ns/CMakeLists.txt`
+### NSPE Configuration: `nspe/CMakeLists.txt`
 
 #### Dependencies
 ```cmake
@@ -220,7 +220,7 @@ tfm_tinymaix_status_t tfm_tinymaix_get_model_key(uint8_t* key_buffer, size_t key
 mkdir -p build/spe
 cd build/spe
 
-cmake ../../tflm_spe \
+cmake ../../spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -236,7 +236,7 @@ make -j8 install
 mkdir -p build/nspe
 cd build/nspe
 
-cmake ../../tflm_ns \
+cmake ../../nspe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DCONFIG_SPE_PATH=../spe/api_ns \
@@ -528,7 +528,7 @@ fi
 # Release packaging using CPack
 include(CPack)
 
-set(CPACK_PACKAGE_NAME "pico2w-tfm-tflm")
+set(CPACK_PACKAGE_NAME "pico2w-tfm-tinyml")
 set(CPACK_PACKAGE_VERSION "1.0.0")
 set(CPACK_PACKAGE_DESCRIPTION "TinyMaix TF-M Integration for Pico 2W")
 

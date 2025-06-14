@@ -23,7 +23,7 @@
 #### 0. 프로젝트 클론 및 폴더 이동
 
 ```bash
-git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm-tflm
+git clone https://github.com/TZTZEN/pico2w-tfm-tinyml --recursive && cd pico2w-tfm-tinyml
 ```
 
 #### 1. 개발 모드 빌드 (DEV_MODE) - HUK 키 추출
@@ -84,8 +84,8 @@ python3 tools/tinymaix_model_encryptor.py \
 ### 아키텍처
 
 #### 디렉터리 구조
-- **`tflm_spe/`** - 보안 처리 환경 구성
-- **`tflm_ns/`** - 비보안 처리 환경 및 테스트 애플리케이션
+- **`spe/`** - 보안 처리 환경 구성
+- **`nspe/`** - 비보안 처리 환경 및 테스트 애플리케이션
 - **`partitions/`** - 커스텀 Secure Partition (현재: echo_service, tinymaix_inference)
 - **`app_broker/`** - 비보안 애플리케이션 브로커
 - **`interface/`** - 보안/비보안 환경 간 API
@@ -130,7 +130,7 @@ python3 test_cbc_decrypt.py
 
 ### 테스트
 
-테스트 애플리케이션은 `tflm_ns/`에 위치하며 Secure Partition 사용법을 보여줍니다:
+테스트 애플리케이션은 `nspe/`에 위치하며 Secure Partition 사용법을 보여줍니다:
 - **`echo_test_app.c`** - 에코 서비스 기능 테스트
 - **`psa_crypto_test.c`** - PSA 암호화 연산 테스트 (AES-128, SHA-256)
 - **`tinymaix_inference_test.c`** - TinyMaix 추론 서비스 기능 테스트
@@ -144,7 +144,7 @@ python3 test_cbc_decrypt.py
 
 ```bash
 # SPE 빌드
-cmake -S ./tflm_spe -B build/spe \
+cmake -S ./spe -B build/spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -154,7 +154,7 @@ cmake -S ./tflm_spe -B build/spe \
 cmake --build build/spe -- -j8 install
 
 # NSPE 빌드  
-cmake -S ./tflm_ns -B build/nspe \
+cmake -S ./nspe -B build/nspe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DCONFIG_SPE_PATH=build/spe/api_ns
@@ -202,7 +202,7 @@ This project is a **TinyMaix integration with TF-M (Trusted Firmware-M)** for th
 #### 0. Clone and Navigate to Project Folder
 
 ```bash
-git clone https://github.com/TZTZEN/pico2w-tfm-tflm --recursive && cd pico2w-tfm-tflm
+git clone https://github.com/TZTZEN/pico2w-tfm-tinyml --recursive && cd pico2w-tfm-tinyml
 ```
 
 #### 1. Build Only (with caches)
@@ -231,8 +231,8 @@ Development mode enables the following debug features:
 ### Architecture
 
 #### Directory Structure
-- **`tflm_spe/`** - Secure Processing Environment configuration
-- **`tflm_ns/`** - Non-Secure Processing Environment with test applications
+- **`spe/`** - Secure Processing Environment configuration
+- **`nspe/`** - Non-Secure Processing Environment with test applications
 - **`partitions/`** - Custom secure partitions (current: echo_service, tinymaix_inference)
 - **`app_broker/`** - Non-secure application broker
 - **`interface/`** - APIs between secure/non-secure worlds
@@ -304,7 +304,7 @@ python3 test_cbc_decrypt.py
 
 ### Testing
 
-Test applications in `tflm_ns/` demonstrate secure partition usage:
+Test applications in `nspe/` demonstrate secure partition usage:
 - **`echo_test_app.c`** - Tests echo service functionality
 - **`psa_crypto_test.c`** - Tests PSA crypto operations (AES-128, SHA-256)
 - **`tinymaix_inference_test.c`** - Tests TinyMaix inference service functionality
@@ -331,7 +331,7 @@ For advanced users, manual build steps are available:
 
 ```bash
 # SPE Build
-cmake -S ./tflm_spe -B build/spe \
+cmake -S ./spe -B build/spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -341,7 +341,7 @@ cmake -S ./tflm_spe -B build/spe \
 cmake --build build/spe -- -j8 install
 
 # NSPE Build  
-cmake -S ./tflm_ns -B build/nspe \
+cmake -S ./nspe -B build/nspe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DCONFIG_SPE_PATH=build/spe/api_ns

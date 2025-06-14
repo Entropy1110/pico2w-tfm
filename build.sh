@@ -58,7 +58,7 @@ echo "Building SPE (Secure Processing Environment)..."
 echo "==============================================="
 
 
-cmake -S ./tflm_spe -B "${BUILD_DIR}/spe" \
+cmake -S ./spe -B "${BUILD_DIR}/spe" \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
@@ -79,7 +79,7 @@ echo ""
 echo "Building NSPE (Non-Secure Processing Environment)..."
 echo "====================================================="
 
-cmake -S ./tflm_ns -B "${BUILD_DIR}/nspe" \
+cmake -S ./nspe -B "${BUILD_DIR}/nspe" \
     -DTFM_PLATFORM=rpi/rp2350 \
     -DPICO_BOARD=pico2_w \
     -DCONFIG_SPE_PATH="${BUILD_DIR}/spe/api_ns" \

@@ -17,7 +17,7 @@ CMake Error: Could not find platform definition for rpi/rp2350
 ls pico2w-trusted-firmware-m/platform/ext/target/rpi/rp2350
 
 # Verify build command
-cmake -S ./tflm_spe -B build/spe -DTFM_PLATFORM=rpi/rp2350 ...
+cmake -S ./spe -B build/spe -DTFM_PLATFORM=rpi/rp2350 ...
 ```
 
 **Error: Manifest validation failed**
@@ -139,7 +139,7 @@ picotool reboot
 #define MY_SERVICE_SID 0x00000108U  // Must match manifest
 
 // Verify partition is enabled
-// In config_tflm.cmake:
+// In config_tinyml.cmake:
 set(TFM_PARTITION_MY_SERVICE ON CACHE BOOL "Enable My Service")
 
 // Check non_secure_clients in manifest
@@ -607,12 +607,12 @@ rm -rf build/
 
 # Rebuild just SPE
 rm -rf build/spe
-cmake -S ./tflm_spe -B build/spe ...
+cmake -S ./spe -B build/spe ...
 cmake --build build/spe -- -j8 install
 
 # Rebuild just NSPE
 rm -rf build/nspe  
-cmake -S ./tflm_ns -B build/nspe ...
+cmake -S ./nspe -B build/nspe ...
 cmake --build build/nspe -- -j8
 ```
 

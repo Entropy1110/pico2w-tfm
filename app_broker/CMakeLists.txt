@@ -153,7 +153,7 @@ target_sources(tfm_api_ns
     PRIVATE
         # NS specific implementation of NS interface dispatcher
         $<$<NOT:$<BOOL:${TFM_NS_MAILBOX_API}>>:${SPE_INSTALL_INTERFACE_SRC}/os_wrapper/tfm_ns_interface_rtos.c>
-        # Echo service API is now included directly in tfm_tflm_broker
+        # Echo service API is now included directly in tfm_tinyml_broker
 )
 
 target_compile_definitions(tfm_api_ns
@@ -170,29 +170,29 @@ target_link_libraries(tfm_api_ns
 
 ######################## NS application broker ########################
 
-add_library(tfm_tflm_broker STATIC)
+add_library(tfm_tinyml_broker STATIC)
 
-target_sources(tfm_tflm_broker
+target_sources(tfm_tinyml_broker
     PRIVATE
         main_ns.c
-        ../tflm_ns/echo_test_app.c
-        ../tflm_ns/psa_crypto_test.c
-        ../tflm_ns/test_runner.c
-        ../tflm_ns/tinymaix_inference_test.c
+        ../nspe/echo_test_app.c
+        ../nspe/psa_crypto_test.c
+        ../nspe/test_runner.c
+        ../nspe/tinymaix_inference_test.c
         ../interface/src/tfm_echo_api.c
         ../interface/src/tfm_tinymaix_inference_api.c
         ../models/encrypted_mnist_model_psa.c
 )
 
-target_include_directories(tfm_tflm_broker
+target_include_directories(tfm_tinyml_broker
     PUBLIC
         .
-        ../tflm_ns
+        ../nspe
         ../interface/include
         ../models
 )
 
-target_link_libraries(tfm_tflm_broker
+target_link_libraries(tfm_tinyml_broker
     PRIVATE
         os_wrapper
         tfm_nsid_manager
@@ -203,7 +203,7 @@ target_link_libraries(tfm_tflm_broker
         $<$<BOOL:${TFM_NS_MAILBOX_API}>:ns_multi_core>
 )
 
-target_compile_definitions(tfm_tflm_broker
+target_compile_definitions(tfm_tinyml_broker
     PUBLIC
         TFM_NS_LOG
         $<$<BOOL:${TFM_NS_MAILBOX_API}>:TFM_NS_MAILBOX_API>

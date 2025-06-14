@@ -4,7 +4,7 @@
 
 Secure Partitions (SPs) are the fundamental building blocks for creating isolated, secure services within the Trusted Firmware-M (TF-M) framework. Each SP operates in its own sandboxed environment in the Secure Processing Environment (SPE), offering its functionalities to the Non-secure Processing Environment (NSPE) or other SPs through well-defined PSA Functional APIs.
 
-This guide provides a comprehensive walkthrough for developing, integrating, and testing Secure Partitions in the `pico2w-tfm-tflm` project.
+This guide provides a comprehensive walkthrough for developing, integrating, and testing Secure Partitions in the `pico2w-tfm-tinyml` project.
 
 ## 2. Partition Architecture
 
@@ -56,7 +56,7 @@ Conceptual Memory Layout for Partitions:
 ```
 This isolation ensures that a fault or compromise in one partition does not directly affect others, enhancing overall system robustness and security.
 
-## 3. Existing Partitions in `pico2w-tfm-tflm`
+## 3. Existing Partitions in `pico2w-tfm-tinyml`
 
 This project includes pre-built APP-ROT partitions:
 
@@ -760,7 +760,7 @@ touch my_custom_service.c
 touch my_custom_service_manifest.yaml
 touch CMakeLists.txt
 ```
-It's common to place APP-ROT partitions within the application's source tree rather than TF-M's core `partitions` directory. For `pico2w-tfm-tflm`, this would be under `<project_root>/partitions/my_custom_service`.
+It's common to place APP-ROT partitions within the application's source tree rather than TF-M's core `partitions` directory. For `pico2w-tfm-tinyml`, this would be under `<project_root>/partitions/my_custom_service`.
 
 ### Step 2: Write the Manifest File (`my_custom_service_manifest.yaml`)
 
@@ -1049,10 +1049,10 @@ Edit `partitions/manifest_list.yaml` (this file is usually at `<project_root>/pi
 
 ### Step 6: Enable Partition in Build Configuration
 
-Add a CMake option to enable your partition in a project-level CMake configuration file. For `pico2w-tfm-tflm`, this is typically in `tflm_spe/config/config_tflm.cmake` or a similar SPE configuration file:
+Add a CMake option to enable your partition in a project-level CMake configuration file. For `pico2w-tfm-tinyml`, this is typically in `spe/config/tinyml.cmake` or a similar SPE configuration file:
 
 ```cmake
-# In tflm_spe/config/config_tflm.cmake (or equivalent)
+# In spe/config/config_tinyml.cmake (or equivalent)
 # ... (other partition flags)
 set(TFM_PARTITION_MY_CUSTOM_SERVICE ON CACHE BOOL "Enable My Custom Secure Service")
 ```
@@ -1217,10 +1217,10 @@ tfm_my_custom_service_status_t tfm_my_custom_service_bar(
 
 ### Step 1: Create a Non-Secure Test Application
 
-In your NSPE application code (e.g., `tflm_ns/main_ns.c` or a dedicated test file like `tflm_ns/my_custom_service_test.c`):
+In your NSPE application code (e.g., `nspe/main_ns.c` or a dedicated test file like `nspe/my_custom_service_test.c`):
 
 ```c
-// In tflm_ns/my_custom_service_test.c (example)
+// In nspe/my_custom_service_test.c (example)
 #include <stdio.h>
 #include "tfm_my_custom_service_api.h" // Your client API header
 
@@ -1266,19 +1266,19 @@ void test_my_custom_service(void)
 
 ### Step 2: Add Test Code to NSPE Build
 
-If you created `my_custom_service_test.c` and `tfm_my_custom_service_api.c`, add them to your NSPE application's CMakeLists.txt (e.g., `app_broker/CMakeLists.txt` or `tflm_ns/CMakeLists.txt`):
+If you created `my_custom_service_test.c` and `tfm_my_custom_service_api.c`, add them to your NSPE application's CMakeLists.txt (e.g., `app_broker/CMakeLists.txt` or `nspe/CMakeLists.txt`):
 
 ```cmake
 # In app_broker/CMakeLists.txt (or similar for NSPE app)
-target_sources(tfm_tflm_broker # Or your NSPE application target name
+target_sources(tfm_tinyml_broker # Or your NSPE application target name
     PRIVATE
         # ... existing NSPE sources ...
-        ${CMAKE_SOURCE_DIR}/tflm_ns/my_custom_service_test.c # Path to your test C file
+        ${CMAKE_SOURCE_DIR}/nspe/my_custom_service_test.c # Path to your test C file
         ${CMAKE_SOURCE_DIR}/interface/src/tfm_my_custom_service_api.c # Path to your client API C file
 )
 
 # Ensure include directories are set for the NSPE application to find your API header
-target_include_directories(tfm_tflm_broker
+target_include_directories(tfm_tinyml_broker
     PRIVATE
         ${CMAKE_SOURCE_DIR}/interface/include # Where tfm_my_custom_service_api.h is
         # ... other NSPE include directories ...

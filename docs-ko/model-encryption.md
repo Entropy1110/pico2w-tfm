@@ -77,7 +77,7 @@ cleanup:
 ./build.sh DEV_MODE
 
 # 또는 수동 빌드
-cmake -S ./tflm_spe -B build/spe \
+cmake -S ./spe -B build/spe \
   -DTFM_PLATFORM=rpi/rp2350 \
   -DPICO_BOARD=pico2_w \
   -DTFM_PROFILE=profile_medium \
