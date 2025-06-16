@@ -74,5 +74,5 @@ python3 tools/tinymaix_model_encryptor.py \
 
 - **[영어 문서](../docs/)** - 영어 버전 개발자 문서
 - **[프로젝트 README](../README.md)** - 프로젝트 개요 및 빠른 시작
-- **[TF-M 공식 문서](https://tf-m-user-guide.trustedfirmware.org/)** - TF-M 프레임워크 상세 가이드
+- **[TF-M 공식 문서](https://trustedfirmware-m.readthedocs.io/)** - TF-M 프레임워크 상세 가이드
 - **[PSA 사양](https://developer.arm.com/architectures/security-architectures/platform-security-architecture)** - ARM PSA 아키텍처 명세
