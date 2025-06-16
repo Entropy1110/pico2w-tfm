@@ -74,5 +74,5 @@ Contributions to improve documentation are welcome:
 
 - **[Korean Documentation](../docs-ko/)** - Korean version of developer documents
 - **[Project README](../README.md)** - Project overview and quick start
-- **[TF-M Official Documentation](https://tf-m-user-guide.trustedfirmware.org/)** - Detailed guide for the TF-M framework
+- **[TF-M Official Documentation](https://trustedfirmware-m.readthedocs.io/)** - Detailed guide for the TF-M framework
 - **[PSA Specification](https://developer.arm.com/architectures/security-architectures/platform-security-architecture)** - ARM PSA architecture specification
