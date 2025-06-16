@@ -2,6 +2,10 @@
 
 [한국어](#한국어) | [English](#english)
 
+## DEV DOCS
+- 개발을 위한 문서는 [docs-ko](./docs-ko) 를 참조하세요.
+- If you're looking for development documents, refer to [docs](./docs).
+
 ---
 
 ## 한국어
