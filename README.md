@@ -8,7 +8,7 @@
 
 ### 프로젝트 개요
 
-이 프로젝트는 **Raspberry Pi Pico 2W (RP2350)**를 위한 **TinyMaix와 TF-M (Trusted Firmware-M) 통합** 시스템입니다. ARM TrustZone 기술을 사용하여 보안 분할 프로그래밍을 구현하며, 이중 세계 아키텍처(보안 및 비보안 처리 환경)를 통해 안전한 머신러닝 추론을 제공합니다. TinyMaix는 임베디드 시스템에 최적화된 경량 신경망 추론 라이브러리입니다.
+이 프로젝트는 Raspberry Pi Pico 2W (RP2350)를 위한 **TinyMaix와 TF-M (Trusted Firmware-M) 통합** 시스템입니다. ARM TrustZone 기술을 사용하여 보안 분할 프로그래밍을 구현하며, 이중 세계 아키텍처(보안 및 비보안 처리 환경)를 통해 안전한 머신러닝 추론을 제공합니다. TinyMaix는 임베디드 시스템에 최적화된 경량 신경망 추론 라이브러리입니다.
 
 ### 주요 특징
 
@@ -40,6 +40,7 @@ echo "40c962d66a1fa40346cac8b7e612741e" | xxd -r -p > models/model_key_psa.bin
 
 # 또는 사용자 정의 이름으로 저장
 echo "YOUR_HUK_KEY_HERE" | xxd -r -p > models/my_device_key.bin
+```
 
 #### 2. HUK 키를 사용한 모델 암호화
 
@@ -76,10 +77,9 @@ python3 tools/tinymaix_model_encryptor.py \
 ```
 
 
-개발 모드에서는 다음 디버그 기능이 활성화됩니다:
+개발 모드에서는 다음 디버그/키 추출 기능이 활성화됩니다:
 - **HUK 파생 키 출력**: `tfm_tinymaix_get_model_key()` 함수를 통해 HUK에서 파생된 모델 암호화 키를 출력
 - **추가 로깅**: 키 파생 과정에 대한 상세한 디버그 정보
-- **보안 주의**: 프로덕션 환경에서는 절대 사용하지 마세요!
 
 ### 아키텍처
 
@@ -226,7 +226,6 @@ git clone https://github.com/TZTZEN/pico2w-tfm-tinyml --recursive && cd pico2w-t
 Development mode enables the following debug features:
 - **HUK-derived Key Output**: Output model encryption key derived from HUK via `tfm_tinymaix_get_model_key()` function
 - **Additional Logging**: Detailed debug information about key derivation process
-- **Security Warning**: Never use in production environments!
 
 ### Architecture
 
