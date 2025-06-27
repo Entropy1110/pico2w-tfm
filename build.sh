@@ -1,77 +1,99 @@
 #!/bin/bash
+
+# TF-M Provision Application Build Script
+# This script builds both SPE and NSPE for the provision application
+
 set -e
 
+PROJECT_ROOT=$(dirname "$(realpath "$0")")
+BUILD_DIR="${PROJECT_ROOT}/build"
 
-export PROJECT_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # 스크립트가 있는 디렉토리를 루트로 설정
-export TFM_SOURCE_DIR="${PROJECT_ROOT_DIR}/pico2w-trusted-firmware-m"
-export PICO_SDK_DIR="${PROJECT_ROOT_DIR}/pico-sdk"
-export EXAMPLE_PROJECT_DIR="${PROJECT_ROOT_DIR}/pico2w-tfm-exmaple" # 사용자 예제 및 빌드 디렉토리 상위
-
-export SPE_BUILD_DIR="${EXAMPLE_PROJECT_DIR}/build/spe"
-export NSPE_BUILD_DIR="${EXAMPLE_PROJECT_DIR}/build/nspe"
-
-NPROC=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || echo 1)
-echo "Using ${NPROC} cores for building."
-
-# --- 1. SPE 빌드 ---
-echo ""
-echo "#####################################"
-echo "# Building SPE (Secure Processing Environment)"
-echo "#####################################"
-mkdir -p "${SPE_BUILD_DIR}"
-cd "${SPE_BUILD_DIR}" # SPE 빌드 디렉토리로 이동하여 CMake 실행
-rm -rf ./* # 이전 빌드 캐시 정리
-
-cmake -S "${TFM_SOURCE_DIR}" \
-      -B . \
-      -DTFM_PLATFORM=rpi/rp2350 \
-      -DPICO_BOARD=pico2_w \
-      -DTFM_PROFILE=profile_medium \
-      -DPICO_SDK_PATH="${PICO_SDK_DIR}" \
-      -DPLATFORM_DEFAULT_PROVISIONING=OFF
-
-cmake --build . -- -j${NPROC} install
-echo "SPE Build completed."
-cd "${PROJECT_ROOT_DIR}"
-
-echo ""
-echo "######################################"
-echo "# Building NSPE (Non-Secure Processing Environment)"
-echo "######################################"
-mkdir -p "${NSPE_BUILD_DIR}"
-cd "${NSPE_BUILD_DIR}"
-
-cmake -S "${EXAMPLE_PROJECT_DIR}" \
-      -B . \
-      -DTFM_PLATFORM=rpi/rp2350 \
-      -DPICO_SDK_PATH="${PICO_SDK_DIR}" \
-      -DCONFIG_SPE_PATH="${SPE_BUILD_DIR}/api_ns" \
-      -DTFM_TOOLCHAIN_FILE="${SPE_BUILD_DIR}/api_ns/cmake/toolchain_ns_GNUARM.cmake" \
-      -DPICO_BOARD=pico2_w
-
-cmake --build . -- -j${NPROC}
-echo "NSPE Build completed."
-cd "${PROJECT_ROOT_DIR}"
-
-echo ""
-echo "######################################"
-echo "# Converting binaries to UF2 format"
-echo "######################################"
-
-if [ -f "./pico_uf2.sh" ]; then
-    chmod +x ./pico_uf2.sh
-    chmod +x ./uf2conv.py
-    ./pico_uf2.sh pico2w-tfm-exmaple build
-    echo "UF2 conversion completed."
-    echo "Generated UF2 files can be found in ${SPE_BUILD_DIR}/bin/"
-    echo "  - bl2.uf2"
-    echo "  - tfm_s_ns_signed.uf2"
-    echo "  - provisioning_bundle.uf2 (if provisioning was built)"
+# Check for DEV_MODE argument
+DEV_MODE_OPT=""
+if [[ "$*" == *"DEV_MODE"* ]]; then
+    DEV_MODE_OPT="-DDEV_MODE=ON"
+    echo "========================================"
+    echo "TF-M Provision Application Build (DEV_MODE)"
+    echo "========================================"
+    echo "DEV_MODE enabled - HUK key derivation debug features available"
 else
-    echo "Warning: pico_uf2.sh not found in ${PROJECT_ROOT_DIR}. Skipping UF2 conversion."
+    echo "========================================"
+    echo "TF-M Provision Application Build"
+    echo "========================================"
 fi
 
+# Clean previous build artifacts
+echo "Cleaning previous build directories..."
+#if clean option is enabled, uncomment the following lines
+if [ "$1" == "clean" ]; then
+    echo "Cleaning SPE, NSPE, TinyMaix build directories..."
+    rm -rf "${BUILD_DIR}/spe"
+    rm -rf "${BUILD_DIR}/nspe"
+else
+    echo "Skipping clean. Use 'clean' argument to remove previous builds."
+fi
+
+echo "Cleaning complete."
+
+# TinyMaix is now integrated directly in the secure partition
 echo ""
-echo "######################################"
-echo "# Build process finished."
-echo "######################################"
+echo "TinyMaix integrated directly in secure partition"
+echo "================================================"
+
+# Create build directories
+mkdir -p "${BUILD_DIR}/spe"
+mkdir -p "${BUILD_DIR}/nspe"
+
+cd "${PROJECT_ROOT}"
+
+
+echo ""
+echo "TinyMaix Model encryption using Test Key..."
+echo "==========================================="
+python3 tools/tinymaix_model_encryptor.py --input models/mnist_valid_q.h --output models/encrypted_mnist_model_psa.bin --key-file models/model_key_psa.bin --generate-c-header
+
+
+echo ""
+echo "Building SPE (Secure Processing Environment)..."
+echo "==============================================="
+
+
+cmake -S ./spe -B "${BUILD_DIR}/spe" \
+  -DTFM_PLATFORM=rpi/rp2350 \
+  -DPICO_BOARD=pico2_w \
+  -DTFM_PROFILE=profile_medium \
+  -DPLATFORM_DEFAULT_PROVISIONING=OFF \
+  -DTFM_TOOLCHAIN_FILE="${PROJECT_ROOT}/pico2w-trusted-firmware-m/toolchain_GNUARM.cmake" \
+  -DCONFIG_TFM_SOURCE_PATH="${PROJECT_ROOT}/pico2w-trusted-firmware-m" \
+  -DTFM_NS_REG_TEST=OFF \
+  -DTFM_S_REG_TEST=OFF \
+  -DTFM_PARTITION_ECHO_SERVICE=ON \
+  -DTFM_PARTITION_TINYMAIX_INFERENCE=ON \
+  ${DEV_MODE_OPT}
+
+echo ""
+echo "Installing SPE build artifacts..."
+cmake --build "${BUILD_DIR}/spe" -- -j8 install
+
+echo ""
+echo "Building NSPE (Non-Secure Processing Environment)..."
+echo "====================================================="
+
+cmake -S ./nspe -B "${BUILD_DIR}/nspe" \
+    -DTFM_PLATFORM=rpi/rp2350 \
+    -DPICO_BOARD=pico2_w \
+    -DCONFIG_SPE_PATH="${BUILD_DIR}/spe/api_ns" \
+    -DTFM_TOOLCHAIN_FILE="${BUILD_DIR}/spe/api_ns/cmake/toolchain_ns_GNUARM.cmake" \
+    ${DEV_MODE_OPT}
+
+cmake --build "${BUILD_DIR}/nspe" -- -j8
+
+echo ""
+echo "========================================"
+echo "Build completed successfully!"
+echo "========================================"
+echo "SPE binaries: ${BUILD_DIR}/spe/bin/"
+echo "NSPE binaries: ${BUILD_DIR}/nspe/bin/"
+echo ""
+./pico_uf2.sh . ./build
+picotool erase && picotool load ${BUILD_DIR}/spe/bin/bl2.uf2 && picotool load ${BUILD_DIR}/spe/bin/tfm_s_ns_signed.uf2 && picotool reboot

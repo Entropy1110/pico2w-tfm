@@ -1,9 +1,9 @@
-[submodule "pico2w-tfm-exmaple"]
-	path = pico2w-tfm-exmaple
-	url = https://github.com/Entropy1110/pico2w-tfm-exmaple
-[submodule "pico-sdk"]
-	path = pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
 [submodule "pico2w-trusted-firmware-m"]
 	path = pico2w-trusted-firmware-m
-	url = https://github.com/Entropy1110/pico2w-trusted-firmware-m
+	url = https://github.com/TZTZEN/pico2w-trusted-firmware-m.git
+[submodule "lib/cmsis_nn"]
+	path = lib/cmsis_nn
+	url = https://github.com/ARM-software/CMSIS-NN.git
+[submodule "lib/tinymaix"]
+	path = lib/tinymaix
+	url = https://github.com/sipeed/TinyMaix.git

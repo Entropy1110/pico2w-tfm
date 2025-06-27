@@ -1,0 +1,42 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2025, Arm Limited. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#-------------------------------------------------------------------------------
+{
+  "description": "TF-M out-of-tree partition manifest list",
+  "type": "manifest_list",
+  "version_major": 0,
+  "version_minor": 1,
+  "manifest_list": [
+    {
+      "description": "TFM Echo Service Partition",
+      "manifest": "echo_service/echo_service_manifest.yaml",
+      "output_path": "secure_fw/partitions/echo_service",
+      "conditional": "TFM_PARTITION_ECHO_SERVICE",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 444,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_echo_service.*"
+        ]
+      }
+    },
+    {
+      "description": "TFM TinyMaix Inference Service Partition",
+      "manifest": "tinymaix_inference/tinymaix_inference_manifest.yaml",
+      "output_path": "secure_fw/partitions/tinymaix_inference",
+      "conditional": "TFM_PARTITION_TINYMAIX_INFERENCE",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 445,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_tinymaix_inference.*"
+        ]
+      }
+    }
+  ]
+}

@@ -1,4 +1,19 @@
-# List of files and extensions to be ignored
+# ==============================================================================
+# TF-M Provision Project .gitignore
+# ==============================================================================
+
+# ==============================================================================
+# Build directories and artifacts
+# ==============================================================================
+
+# Main build directories
+/build/
+/build*/
+/cmake_build*/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
 
 # Eclipse
 *.project
@@ -6,23 +21,35 @@
 .pydevproject
 .settings/
 
-# Visual Studio Code
-.vscode/
+# CLion
+.idea/
 
-# Garbage files
-build*/
-*.orig
-**/__pycache__
-*.pyc
 
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-/build*/
-/cmake_build*/
+# Windows
+*.tmp
+*.temp
+desktop.ini
 
-.clang-format
-**/.DS_Store
+# ==============================================================================
+# Custom project specific
+# ==============================================================================
 
-# Python venv
+# Any custom config files that shouldn't be shared
+*local.cmake
+*local.config
+
 venv
-limavenv
+venv2
+.claude
+CLAUDE.md
+
+tflite-micro
